@@ -22,3 +22,15 @@ Vulkan源码的编译-Windows 10（编译之前，需要先去https://www.lunarg
 $cmake -G "Visual Studio 15 2017 Win64"
 ```
 用Visual Studio 打开项目vulkanExamples.sln，进行编译。
+
+
+Submodule information
+```
+git submodule add https://github.com/g-truc/glm external/glm external/glm
+cd external/glm
+git checkout -b 1ad55c5016339b83b7eec98c31007e0aee57d2bf
+
+git submodule add https://github.com/KhronosGroup/KTX-Software external/ktx
+cd  external/ktx
+git checkout -b 726d14d02c95bb21ec9e43807751b491d295dd3c
+```
