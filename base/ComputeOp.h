@@ -1,3 +1,9 @@
+/*
+* Copyright (C) 2020 by Xu Xing (xu.xing@outlook.com)
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
+
 #if defined(_WIN32)
 #pragma comment(linker, "/subsystem:console")
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
