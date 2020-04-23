@@ -1,0 +1,21 @@
+#version 450
+layout(binding = 0) buffer Output {
+   uint outputValues[ ];
+};
+
+layout(binding = 1, rgba8) uniform readonly image2D values;
+
+layout(binding = 2, rgba8) uniform readonly image2D filterValues;
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout (constant_id = 0) const uint BUFFER_ELEMENTS = 32;
+
+void main() 
+{
+	uint index = gl_GlobalInvocationID.x;
+	if (index >= BUFFER_ELEMENTS) 
+		return;	
+	outputValues[index] = int(imageLoad(values,ivec2(gl_GlobalInvocationID.xy))) + int(imageLoad(filterValues,ivec2(gl_GlobalInvocationID.xy)));
+}
+

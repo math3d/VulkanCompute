@@ -40,6 +40,7 @@ endfunction(buildExamples)
 
 set(EXAMPLES
     add
+	add_image
 )
 
 buildExamples()

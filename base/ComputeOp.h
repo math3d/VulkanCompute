@@ -1,8 +1,11 @@
 /*
-* Copyright (C) 2020 by Xu Xing (xu.xing@outlook.com)
-*
-* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
-*/
+ * Copyright (C) 2020 by Xu Xing (xu.xing@outlook.com)
+ *
+ * This code is licensed under the MIT license (MIT)
+ * (http://opensource.org/licenses/MIT)
+ */
+#ifndef COMPUTE_OP_H_
+#define COMPUTE_OP_H_
 
 #if defined(_WIN32)
 #pragma comment(linker, "/subsystem:console")
@@ -53,7 +56,7 @@ class ComputeOp {
 public:
   struct InitParams {
     InitParams();
-    InitParams(const InitParams& other);
+    InitParams(const InitParams &other);
     std::vector<uint32_t> computeInput;
     std::vector<uint32_t> computeFilter;
     std::vector<uint32_t> computeOutput;
@@ -61,6 +64,8 @@ public:
   };
   VkInstance instance;
   VkPhysicalDevice physicalDevice;
+  VkPhysicalDeviceProperties deviceProperties;
+  VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
   VkDevice device;
   uint32_t queueFamilyIndex;
   VkPipelineCache pipelineCache;
@@ -75,6 +80,23 @@ public:
   VkPipeline pipeline;
   VkShaderModule shaderModule;
   InitParams params_;
+  VkBuffer deviceBuffer, hostBuffer;
+  VkDeviceMemory deviceMemory, hostMemory;
+
+  VkImage image_;
+  VkImage filterImage_;
+  VkSampler sampler_;
+  VkSampler filterSampler_;
+  VkImageView view_;
+  VkImageView filterView_;
+  VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  VkImageLayout filterImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  VkBuffer filterDeviceBuffer, filterHostBuffer;
+  VkDeviceMemory filterDeviceMemory, filterHostMemory;
+
+  VkBuffer outputDeviceBuffer, outputHostBuffer;
+  VkDeviceMemory outputDeviceMemory, outputHostMemory;
 
   VkDebugReportCallbackEXT debugReportCallback{};
 
@@ -82,9 +104,33 @@ public:
                                 VkMemoryPropertyFlags memoryPropertyFlags,
                                 VkBuffer *buffer, VkDeviceMemory *memory,
                                 VkDeviceSize size, void *data = nullptr);
+  VkResult createImage(VkImage &image);
+  VkResult createSampler(VkImage &image, VkSampler &sampler, VkImageView &view);
+  VkResult copyBufferHostToDevice(VkBuffer &deviceBuffer, VkBuffer &hostBuffer,
+                                  const VkDeviceSize &bufferSize);
 
+  VkResult copyHostBufferToDeviceImage(VkImage &image,
+                                       VkDeviceMemory &deviceMemory,
+                                       VkBuffer &stagingBuffer,
+                                       VkDeviceMemory &stagingMemory);
+  VkResult prepareComputeCommandBuffer(VkBuffer &outputDeviceBuffer,
+                                       VkBuffer &outputHostBuffer,
+                                       VkDeviceMemory &outputHostMemory,
+                                       const VkDeviceSize &bufferSize);
+
+  VkResult preparePipeline(VkBuffer &deviceBuffer, VkBuffer &filterDeviceBuffer,
+                           VkBuffer &outputDeviceBuffer);
+  VkResult prepareImagePipeline(VkBuffer &deviceBuffer,
+                                    VkBuffer &filterDeviceBuffer,
+                                    VkBuffer &outputDeviceBuffer);
+  VkResult prepareDebugLayer();
+  VkResult prepareDevice();
+  uint32_t getMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties,
+                         VkBool32 *memTypeFound = nullptr);
+  void summary();
+  virtual void execute();
   ComputeOp();
-  ComputeOp(const InitParams& init_params);
+  ComputeOp(const InitParams &init_params);
 
   virtual ~ComputeOp();
 };
@@ -115,4 +161,6 @@ void android_realmain(android_app *state) {
     }
   }
 }
+#endif
+
 #endif
