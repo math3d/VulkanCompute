@@ -566,7 +566,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkBuffer &stagingBuffer,
 VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &hostBuffer,
                                                 VkBuffer &deviceBuffer) {
 
-
+  return VK_SUCCESS;
 }
 
 VkResult ComputeOp::prepareComputeCommandBuffer(

@@ -113,7 +113,7 @@ public:
                                        VkBuffer &stagingBuffer);
   VkResult copyDeviceImageToHostBuffer(VkBuffer &stagingBuffer, VkImage &image);
   VkResult copyDeviceBufferToHostBuffer(VkBuffer &hostBuffer,
-                                                VkBuffer &deviceBuffer) 
+	  VkBuffer &deviceBuffer);
   VkResult prepareComputeCommandBuffer(VkBuffer &outputDeviceBuffer,
                                        VkBuffer &outputHostBuffer,
                                        VkDeviceMemory &outputHostMemory,
