@@ -36,8 +36,8 @@ android_app *androidapp;
 
 #define BUFFER_ELEMENTS 32
 const int BUFFER_NUMBER = 3;
-const int width = 4;
-const int height = 8;
+const int width = 32;
+const int height = 1;
 const int mipLevels = 1;
 
 
@@ -504,11 +504,20 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkBuffer &stagingBuffer,
   vkGetImageSubresourceLayout(device, dstImage, &subResource, &subResourceLayout);
   
   // Map image memory so we can start copying from it
-  const char* data;
+  const int* data;
   vkMapMemory(device, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void**)&data);
-  //void * mapped;
-  std::vector<uint32_t> out;
-  memcpy(out.data(), data, 4);
+  for (uint32_t y = 0; y < 32; y++) 
+  {
+	  printf("%s,%d, %d %d\n",__func__,__LINE__,y, *(data+y));
+  }
+  int out[32];
+  memcpy(out, data, 32*sizeof(int));
+  for (uint32_t y = 0; y < 32; y++) 
+  {
+	  printf("%s,%d, memcpy test: %d %d\n",__func__,__LINE__,y, *(out+y));
+  }  
+  #if 0
+  std::cout << std::endl;  
   //data += subResourceLayout.offset;
 
   std::ofstream file("abc.txt", std::ios::out | std::ios::binary);
@@ -551,6 +560,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkBuffer &stagingBuffer,
   file.close();
   
   std::cout << "Screenshot saved to disk" << std::endl;
+  #endif
   
   // Clean up resources
   vkUnmapMemory(device, dstImageMemory);

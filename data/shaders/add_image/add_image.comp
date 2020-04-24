@@ -14,14 +14,24 @@ layout (constant_id = 0) const uint BUFFER_ELEMENTS = 32;
 void main() 
 {
 	uint index = gl_GlobalInvocationID.x;
+    int acc = 0;
+
+	        for (int row = 0; row < 32; ++row) {
+				for (int col = 0; col < 1; ++col) {
+					vec4 rgba = imageLoad(values,ivec2(row, col)).rgba;
+					acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
+					
+				}
+	        }
+	outputValues[index] = acc+index;
 	//if (index >= BUFFER_ELEMENTS) 
 	//	return;	
     //vec4 rgba = imageLoad(values,ivec2(gl_GlobalInvocationID.xy)).rgba;
     //vec4 drgba = imageLoad(filterValues,ivec2(gl_GlobalInvocationID.xy)).rgba;
     //imageStore(values,  100;
     //imageStore(values, ivec2(0,0), vec4(222,111,112,113));
-    vec4 rgba = imageLoad(values,ivec2(0,0)).rgba;
-    outputValues[index] = int(rgba.r+rgba.g+rgba.b+rgba.a);;
+    //vec4 rgba = imageLoad(values,ivec2(0,0)).rgba;
+    //outputValues[index] = int(rgba.r+rgba.g+rgba.b+rgba.a);;
     //outputValues[index] = int(rgba.r+rgba.g+rgba.b+rgba.a)+int(drgba.r+drgba.g+drgba.b+drgba.a);
 	//outputValues[index] = int(imageLoad(values,ivec2(gl_GlobalInvocationID.xy)).r);// + int(imageLoad(filterValues,ivec2(gl_GlobalInvocationID.xy)));
 }

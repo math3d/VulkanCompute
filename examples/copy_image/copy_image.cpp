@@ -15,7 +15,7 @@
 #include <string.h>
 #include <vector>
 
-#include "ComputeImageOp.h"
+#include "ComputeCopyImageOp.h"
 
 #define DEBUG (!NDEBUG)
 
@@ -42,7 +42,7 @@ int main() {
   params.computeOutput = computeOutput;
   params.shader_path = "shaders/add_image/add_image.comp.spv";
 
-  ComputeOp *computeOp = new ComputeImageOp(params);
+  ComputeOp *computeOp = new ComputeCopyImageOp(params);
   computeOp->execute();
   computeOp->summary();
   delete (computeOp);
