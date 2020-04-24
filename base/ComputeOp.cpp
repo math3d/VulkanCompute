@@ -36,6 +36,10 @@ android_app *androidapp;
 
 #define BUFFER_ELEMENTS 32
 const int BUFFER_NUMBER = 3;
+const int width = 4;
+const int height = 8;
+const int mipLevels = 1;
+
 
 ComputeOp::InitParams::InitParams() = default;
 
@@ -74,22 +78,22 @@ VkResult ComputeOp::createBufferWithData(
     void *mapped;
     VK_CHECK_RESULT(vkMapMemory(device, *memory, 0, size, 0, &mapped));
     memcpy(mapped, data, size);
-    vkUnmapMemory(device, *memory);
-  }
-
-  VK_CHECK_RESULT(vkBindBufferMemory(device, *buffer, *memory, 0));
-
   if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
     // Flush writes to host visible buffer
     void *mapped;
-    vkMapMemory(device, *memory, 0, VK_WHOLE_SIZE, 0, &mapped);
+    //vkMapMemory(device, *memory, 0, VK_WHOLE_SIZE, 0, &mapped);
     VkMappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
     mappedRange.memory = *memory;
     mappedRange.offset = 0;
     mappedRange.size = VK_WHOLE_SIZE;
     vkFlushMappedMemoryRanges(device, 1, &mappedRange);
+    //vkUnmapMemory(device, *memory);
+  }
     vkUnmapMemory(device, *memory);
   }
+
+  VK_CHECK_RESULT(vkBindBufferMemory(device, *buffer, *memory, 0));
+
   return VK_SUCCESS;
 }
 
@@ -184,11 +188,6 @@ VkCommandBuffer createCommandBuffer(VkDevice device, VkCommandPool commandPool,
 }
 
 VkResult ComputeOp::createImage(VkImage &image) {
-
-  // TODO
-  const int width = 4;
-  const int height = 8;
-  const int mipLevels = 1;
   VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
   // Create optimal tiled target image on the device
   VkImageCreateInfo imageCreateInfo = initImageCreateInfo();
@@ -203,7 +202,7 @@ VkResult ComputeOp::createImage(VkImage &image) {
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageCreateInfo.extent = {width, height, 1};
   imageCreateInfo.usage =
-      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
   VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, &image));
   VkMemoryRequirements memReqs = {};
   VkMemoryAllocateInfo memAllocInfo = memoryAllocateInfo();
@@ -225,9 +224,6 @@ inline VkSamplerCreateInfo samplerCreateInfo() {
 }
 
 VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler, VkImageView &view) {
-  const int width = 4;
-  const int height = 8;
-  const int mipLevels = 1;
   VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
   // Create a texture sampler
   // In Vulkan textures are accessed by samplers
@@ -239,9 +235,9 @@ VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler, VkImageVie
   samplerInfo.magFilter = VK_FILTER_LINEAR;
   samplerInfo.minFilter = VK_FILTER_LINEAR;
   samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
   samplerInfo.mipLodBias = 0.0f;
   samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
   samplerInfo.minLod = 0.0f;
@@ -293,16 +289,11 @@ VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler, VkImageVie
 }
 
 VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
-                                                VkDeviceMemory &deviceMemory,
-                                                VkBuffer &stagingBuffer,
-                                                VkDeviceMemory &stagingMemory) {
+                                                VkBuffer &stagingBuffer) {
 
   // Setup buffer copy regions for each mip level
   std::vector<VkBufferImageCopy> bufferCopyRegions;
   uint32_t offset = 0;
-  const int width = 4;
-  const int height = 8;
-  const int mipLevels = 1;
   VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
   for (uint32_t i = 0; i < mipLevels; i++) {
@@ -369,7 +360,7 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
   imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
   imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-  imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
 
   // Insert a memory dependency at the proper pipeline stages that will
   // execute the image layout transition Source pipeline stage stage is copy
@@ -378,6 +369,7 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   vkCmdPipelineBarrier(copyCmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
                        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 0,
                        nullptr, 1, &imageMemoryBarrier);
+  
 
   // Store current layout for later reuse
   // texture.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -385,9 +377,196 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   flushCommandBuffer(device, commandPool, copyCmd, queue, true);
 
   // Clean up staging resources
-  vkFreeMemory(device, stagingMemory, nullptr);
-  vkDestroyBuffer(device, stagingBuffer, nullptr);
+  //vkFreeMemory(device, stagingMemory, nullptr);
+  //vkDestroyBuffer(device, stagingBuffer, nullptr);
   return VK_SUCCESS;
+}
+
+VkResult ComputeOp::copyDeviceImageToHostBuffer(VkBuffer &stagingBuffer,
+                                                VkImage &image) {
+
+  // Setup buffer copy regions for each mip level
+  std::vector<VkBufferImageCopy> bufferCopyRegions;
+  uint32_t offset = 0;
+  VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+
+  for (uint32_t i = 0; i < mipLevels; i++) {
+    VkBufferImageCopy bufferCopyRegion = {};
+    bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    bufferCopyRegion.imageSubresource.mipLevel = i;
+    bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+    bufferCopyRegion.imageSubresource.layerCount = 1;
+    bufferCopyRegion.imageExtent.width = width;
+    bufferCopyRegion.imageExtent.height = height;
+    bufferCopyRegion.imageExtent.depth = 1;
+    bufferCopyRegion.bufferOffset = offset;
+
+    bufferCopyRegions.push_back(bufferCopyRegion);
+
+    // TODO: fix offset.
+  }
+
+  // Create the image
+		// Create the linear tiled destination image to copy to and to read the memory from
+  VkImageCreateInfo imageCreateCI(vks::initializers::imageCreateInfo());
+  imageCreateCI.imageType = VK_IMAGE_TYPE_2D;
+  // Note that vkCmdBlitImage (if supported) will also do format conversions if the swapchain color format would differ
+  imageCreateCI.format = VK_FORMAT_R8G8B8A8_UNORM;
+  imageCreateCI.extent.width = width;
+  imageCreateCI.extent.height = height;
+  imageCreateCI.extent.depth = 1;
+  imageCreateCI.arrayLayers = 1;
+  imageCreateCI.mipLevels = 1;
+  imageCreateCI.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageCreateCI.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageCreateCI.tiling = VK_IMAGE_TILING_LINEAR;
+  imageCreateCI.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  VkImage dstImage;
+  VK_CHECK_RESULT(vkCreateImage(device, &imageCreateCI, nullptr, &dstImage));
+  // Create memory to back up the image
+  VkMemoryRequirements memRequirements;
+  VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
+  VkDeviceMemory dstImageMemory;
+  vkGetImageMemoryRequirements(device, dstImage, &memRequirements);
+  memAllocInfo.allocationSize = memRequirements.size;
+  // Memory must be host visible to copy from
+  memAllocInfo.memoryTypeIndex = getMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  VK_CHECK_RESULT(vkAllocateMemory(device, &memAllocInfo, nullptr, &dstImageMemory));
+  VK_CHECK_RESULT(vkBindImageMemory(device, dstImage, dstImageMemory, 0));
+
+
+
+  VkCommandBuffer copyCmd = createCommandBuffer(
+      device, commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+
+  // Transition destination image to transfer destination layout
+  vks::tools::insertImageMemoryBarrier(
+	  copyCmd,
+	  dstImage,
+	  0,
+	  VK_ACCESS_TRANSFER_WRITE_BIT,
+	  VK_IMAGE_LAYOUT_UNDEFINED,
+	  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	  VK_PIPELINE_STAGE_TRANSFER_BIT,
+	  VK_PIPELINE_STAGE_TRANSFER_BIT,
+	  VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+  
+  // Transition swapchain image from present to transfer source layout
+  vks::tools::insertImageMemoryBarrier(
+	  copyCmd,
+	  image,
+	  VK_ACCESS_MEMORY_READ_BIT,
+	  VK_ACCESS_TRANSFER_READ_BIT,
+	  VK_IMAGE_LAYOUT_GENERAL,
+	  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	  VK_PIPELINE_STAGE_TRANSFER_BIT,
+	  VK_PIPELINE_STAGE_TRANSFER_BIT,
+	  VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+
+
+  // Otherwise use image copy (requires us to manually flip components)
+  VkImageCopy imageCopyRegion{};
+  imageCopyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageCopyRegion.srcSubresource.layerCount = 1;
+  imageCopyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageCopyRegion.dstSubresource.layerCount = 1;
+  imageCopyRegion.extent.width = width;
+  imageCopyRegion.extent.height = height;
+  imageCopyRegion.extent.depth = 1;
+  
+  // Issue the copy command
+  vkCmdCopyImage(
+	  copyCmd,
+	  image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	  dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	  1,
+	  &imageCopyRegion);
+
+  // Transition destination image to general layout, which is the required layout for mapping the image memory later on
+  vks::tools::insertImageMemoryBarrier(
+	  copyCmd,
+	  dstImage,
+	  VK_ACCESS_TRANSFER_WRITE_BIT,
+	  VK_ACCESS_MEMORY_READ_BIT,
+	  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	  VK_IMAGE_LAYOUT_GENERAL,
+	  VK_PIPELINE_STAGE_TRANSFER_BIT,
+	  VK_PIPELINE_STAGE_TRANSFER_BIT,
+	  VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+  
+  flushCommandBuffer(device, commandPool, copyCmd, queue, true);
+
+ 
+  // Get layout of the image (including row pitch)
+  VkImageSubresource subResource { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 };
+  VkSubresourceLayout subResourceLayout;
+  vkGetImageSubresourceLayout(device, dstImage, &subResource, &subResourceLayout);
+  
+  // Map image memory so we can start copying from it
+  const char* data;
+  vkMapMemory(device, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void**)&data);
+  //void * mapped;
+  std::vector<uint32_t> out;
+  memcpy(out.data(), data, 4);
+  //data += subResourceLayout.offset;
+
+  std::ofstream file("abc.txt", std::ios::out | std::ios::binary);
+  
+  // ppm header
+  file << "P6\n" << width << "\n" << height << "\n" << 255 << "\n";
+  
+  // If source is BGR (destination is always RGB) and we can't use blit (which does automatic conversion), we'll have to manually swizzle color components
+  bool colorSwizzle = false;
+  // Check if source is BGR 
+  // Note: Not complete, only contains most common and basic BGR surface formats for demonstation purposes
+  /*
+  if (!supportsBlit)
+  {
+	  std::vector<VkFormat> formatsBGR = { VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM };
+	  colorSwizzle = (std::find(formatsBGR.begin(), formatsBGR.end(), swapChain.colorFormat) != formatsBGR.end());
+  }
+  */
+  
+  // ppm binary pixel data
+  for (uint32_t y = 0; y < height; y++) 
+  {
+	  unsigned int *row = (unsigned int*)data;
+	  for (uint32_t x = 0; x < width; x++) 
+	  {
+		  if (colorSwizzle) 
+		  { 
+			  file.write((char*)row+2, 1);
+			  file.write((char*)row+1, 1);
+			  file.write((char*)row, 1);
+		  }
+		  else
+		  {
+			  file.write((char*)row, 3);
+		  }
+		  row++;
+	  }
+	  data += subResourceLayout.rowPitch;
+  }
+  file.close();
+  
+  std::cout << "Screenshot saved to disk" << std::endl;
+  
+  // Clean up resources
+  vkUnmapMemory(device, dstImageMemory);
+  vkFreeMemory(device, dstImageMemory, nullptr);
+
+
+  // Clean up staging resources
+  //vkFreeMemory(device, stagingMemory, nullptr);
+  //vkDestroyBuffer(device, stagingBuffer, nullptr);
+  return VK_SUCCESS;
+}
+
+VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &hostBuffer,
+                                                VkBuffer &deviceBuffer) {
+
+
 }
 
 VkResult ComputeOp::prepareComputeCommandBuffer(
@@ -779,10 +958,10 @@ VkResult ComputeOp::prepareImagePipeline(VkBuffer &deviceBuffer,
   std::vector<VkDescriptorPoolSize> poolSizes = {
       // Compute UBO
       vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                                            1),
+                                            2),
       // Graphics image samplers
-      vks::initializers::descriptorPoolSize(
-          VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
+      //vks::initializers::descriptorPoolSize(
+      //    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
       // Storage buffer for the scene primitives
       vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                             2),
@@ -930,7 +1109,6 @@ void ComputeOp::summary() {
 }
 
 ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params) {
-  printf("%s,%d\n", __FUNCTION__, __LINE__);
   prepareDebugLayer();
   // Vulkan device creation.
   prepareDevice();

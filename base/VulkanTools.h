@@ -53,9 +53,7 @@
 	VkResult res = (f);																					\
 	if (res != VK_SUCCESS)																				\
 	{																									\
-        printf("in %s at line %s\n", __FILE__ ,__LINE__); \
 		std::cout << "Fatal : VkResult is \"" << vks::tools::errorString(res) << "\" in " << __FILE__ << " at line " << __LINE__ << std::endl; \
-		printf("Fatal : VkResult is %s in %s at line %s\n", vks::tools::errorString(res), __FILE__ ,__LINE__); \
 		assert(res == VK_SUCCESS);																		\
 	}																									\
 }

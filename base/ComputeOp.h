@@ -89,8 +89,8 @@ public:
   VkSampler filterSampler_;
   VkImageView view_;
   VkImageView filterView_;
-  VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  VkImageLayout filterImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  VkImageLayout imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+  VkImageLayout filterImageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
   VkBuffer filterDeviceBuffer, filterHostBuffer;
   VkDeviceMemory filterDeviceMemory, filterHostMemory;
@@ -110,9 +110,10 @@ public:
                                   const VkDeviceSize &bufferSize);
 
   VkResult copyHostBufferToDeviceImage(VkImage &image,
-                                       VkDeviceMemory &deviceMemory,
-                                       VkBuffer &stagingBuffer,
-                                       VkDeviceMemory &stagingMemory);
+                                       VkBuffer &stagingBuffer);
+  VkResult copyDeviceImageToHostBuffer(VkBuffer &stagingBuffer, VkImage &image);
+  VkResult copyDeviceBufferToHostBuffer(VkBuffer &hostBuffer,
+                                                VkBuffer &deviceBuffer) 
   VkResult prepareComputeCommandBuffer(VkBuffer &outputDeviceBuffer,
                                        VkBuffer &outputHostBuffer,
                                        VkDeviceMemory &outputHostMemory,
