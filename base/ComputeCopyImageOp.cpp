@@ -22,13 +22,13 @@ void ComputeCopyImageOp::execute() {
   {
     createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                              VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer,
-                         &hostMemory, bufferSize, params_.computeInput.data());
+                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer_,
+                         &hostMemory_, bufferSize, params_.computeInput.data());
 
-    createImage(image_);
+    createDeviceImage(image_);
     createSampler(image_, sampler_, view_);
 
-    copyHostBufferToDeviceImage(image_, hostBuffer);
+    copyHostBufferToDeviceImage(image_, hostBuffer_);
 	VkDeviceMemory testMemory;
 	VkBuffer testBuffer;
     createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
@@ -36,11 +36,11 @@ void ComputeCopyImageOp::execute() {
                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &testBuffer,
                          &testMemory, bufferSize);
 
-	copyDeviceImageToHostBuffer(testBuffer, image_);
+	copyDeviceImageToHostBuffer(image_);
   }
 
 
-  vkQueueWaitIdle(queue);
+  vkQueueWaitIdle(queue_);
 
   //TODO: exit clean up.
 }

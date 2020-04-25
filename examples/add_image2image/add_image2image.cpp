@@ -15,7 +15,7 @@
 #include <string.h>
 #include <vector>
 
-#include "ComputeBufferToImageOp.h"
+#include "ComputeImageToImageOp.h"
 
 #define DEBUG (!NDEBUG)
 
@@ -32,19 +32,20 @@ int main() {
   std::vector<uint32_t> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
-  std::generate(computeInput.begin(), computeInput.end(), [&n] { return 33+n++; });
+  uint32_t start = 0x3f800000;
+  std::generate(computeInput.begin(), computeInput.end(), [&n] { return 0x3f800000+n++; });
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] { return 125+m++; });
+                [&m] { return 0x3f800000 +m++; });
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
-  params.shader_path = "shaders/add_image/add_image.comp.spv";
+  params.shader_path = "shaders/add_image2image/add_image2image.comp.spv";
 
-  ComputeOp *computeOp = new ComputeBufferToImageOp(params);
+  ComputeOp *computeOp = new ComputeImageToImageOp(params);
   computeOp->execute();
-  computeOp->summary();
+  // computeOp->summary();
   delete (computeOp);
   return 0;
 }

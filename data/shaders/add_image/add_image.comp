@@ -1,13 +1,11 @@
 #version 450
+layout (local_size_x = 1, local_size_y = 1) in;
 layout(binding = 0) buffer Output {
    uint outputValues[ ];
 };
-
 layout(binding = 1, rgba8) uniform image2D values;
-
-layout(binding = 2, rgba8) uniform readonly image2D filterValues;
-
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+//readonly
+layout(binding = 2, rgba8) uniform image2D filterValues;
 
 layout (constant_id = 0) const uint BUFFER_ELEMENTS = 32;
 
@@ -16,22 +14,39 @@ void main()
 	uint index = gl_GlobalInvocationID.x;
     int acc = 0;
 
-	        for (int row = 0; row < 4; ++row) {
-				for (int col = 0; col < 8; ++col) {
-					vec4 rgba = imageLoad(values,ivec2(row, col)).rgba;
-					acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
-					
-				}
-	        }
+	for (int row = 0; row < 4; ++row) {
+		for (int col = 0; col < 8; ++col) {
+			vec4 rgba = imageLoad(values,ivec2(row, col)).rgba;
+			acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
+			
+		}
+	}
 
-	        for (int row = 0; row < 8; ++row) {
-				for (int col = 0; col < 4; ++col) {
-					vec4 rgba = imageLoad(values,ivec2(row, col)).rgba;
-					acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
-					
-				}
-	        }
-	outputValues[index] = acc;
+	for (int row = 0; row < 8; ++row) {
+		for (int col = 0; col < 4; ++col) {
+			vec4 rgba = imageLoad(values,ivec2(row, col)).rgba;
+			acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
+			
+		}
+	}
+
+	for (int row = 0; row < 4; ++row) {
+		for (int col = 0; col < 8; ++col) {
+			vec4 rgba = imageLoad(filterValues,ivec2(row, col)).rgba;
+			acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
+			
+		}
+	}
+
+	for (int row = 0; row < 8; ++row) {
+		for (int col = 0; col < 4; ++col) {
+			vec4 rgba = imageLoad(filterValues,ivec2(row, col)).rgba;
+			acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
+			
+		}
+	}
+
+	outputValues[index] = acc+100;
 	//if (index >= BUFFER_ELEMENTS) 
 	//	return;	
     //vec4 rgba = imageLoad(values,ivec2(gl_GlobalInvocationID.xy)).rgba;

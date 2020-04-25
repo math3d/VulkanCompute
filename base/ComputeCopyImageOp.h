@@ -3,8 +3,8 @@
 *
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
-#ifndef COMPUTE_IMAGE_OP_H_
-#define COMPUTE_IMAGE_OP_H_
+#ifndef COMPUTE_COPY_IMAGE_OP_H_
+#define COMPUTE_COPY_IMAGE_OP_H_
 #include "ComputeOp.h"
 
 class ComputeCopyImageOp: public ComputeOp{
