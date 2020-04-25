@@ -16,14 +16,22 @@ void main()
 	uint index = gl_GlobalInvocationID.x;
     int acc = 0;
 
-	        for (int row = 0; row < 32; ++row) {
-				for (int col = 0; col < 1; ++col) {
+	        for (int row = 0; row < 4; ++row) {
+				for (int col = 0; col < 8; ++col) {
 					vec4 rgba = imageLoad(values,ivec2(row, col)).rgba;
 					acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
 					
 				}
 	        }
-	outputValues[index] = acc+index;
+
+	        for (int row = 0; row < 8; ++row) {
+				for (int col = 0; col < 4; ++col) {
+					vec4 rgba = imageLoad(values,ivec2(row, col)).rgba;
+					acc += int(rgba.r+rgba.g+rgba.b+rgba.a);
+					
+				}
+	        }
+	outputValues[index] = acc;
 	//if (index >= BUFFER_ELEMENTS) 
 	//	return;	
     //vec4 rgba = imageLoad(values,ivec2(gl_GlobalInvocationID.xy)).rgba;

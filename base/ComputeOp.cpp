@@ -158,8 +158,17 @@ void flushCommandBuffer(VkDevice device, VkCommandPool commandPool,
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &commandBuffer;
+  VkFenceCreateInfo fenceInfo = vks::initializers::fenceCreateInfo(VK_FLAGS_NONE);
+  VkFence fence;
+  VK_CHECK_RESULT(vkCreateFence(device, &fenceInfo, nullptr, &fence));
+  // Submit to the queue
+  VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, fence));
+  VK_CHECK_RESULT(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX));
+  
+  vkDestroyFence(device, fence, nullptr);
 
-  VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+
+  //VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
   VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
   if (free) {
@@ -970,8 +979,8 @@ VkResult ComputeOp::prepareImagePipeline(VkBuffer &deviceBuffer,
       vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
                                             2),
       // Graphics image samplers
-      //vks::initializers::descriptorPoolSize(
-      //    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
+      vks::initializers::descriptorPoolSize(
+          VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2),
       // Storage buffer for the scene primitives
       vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                             2),
@@ -979,7 +988,7 @@ VkResult ComputeOp::prepareImagePipeline(VkBuffer &deviceBuffer,
 
   VkDescriptorPoolCreateInfo descriptorPoolInfo =
       vks::initializers::descriptorPoolCreateInfo(
-          static_cast<uint32_t>(poolSizes.size()), poolSizes.data(), 1);
+          static_cast<uint32_t>(poolSizes.size()), poolSizes.data(), 3);
   VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr,
                                          &descriptorPool));
 
