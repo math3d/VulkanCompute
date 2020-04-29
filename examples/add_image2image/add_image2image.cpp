@@ -47,7 +47,7 @@ int main() {
 
   ComputeOp *computeOp = new ComputeImageToImageOp(params);
   computeOp->execute();
-  // computeOp->summary();
+  computeOp->summary();
   delete (computeOp);
   return 0;
 }

@@ -60,6 +60,7 @@ const int mipLevels = 1;
 // 1. Move InitParams into ComputeOp.
 // 2. Template the input and output, not all the functions.
 typedef float DATA_TYPE;
+const int DATA_TYPE_ID = 0;
 
 
 class ComputeOp {
@@ -117,6 +118,8 @@ public:
   VkImageLayout outputImageLayout_ = VK_IMAGE_LAYOUT_GENERAL;
   VkDeviceMemory outputImageDeviceMemory_;
 
+  VkQueryPool queryPool_;
+
   VkDebugReportCallbackEXT debugReportCallback{};
 
   VkResult createBufferWithData(VkBufferUsageFlags usageFlags,
@@ -129,7 +132,7 @@ public:
                                   const VkDeviceSize &bufferSize);
 
   VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer);
-  VkResult copyDeviceImageToHostBuffer(VkImage &image);
+  VkResult copyDeviceImageToHostBuffer(VkImage &image, const VkDeviceSize &bufferSize);
   VkResult copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const VkDeviceSize &bufferSize);
   VkResult prepareComputeCommandBuffer(VkBuffer &outputDeviceBuffer,
                                        VkBuffer &outputHostBuffer,
@@ -149,8 +152,6 @@ public:
                                 VkFormat format);
   VkResult prepareDebugLayer();
   VkResult prepareDevice();
-  uint32_t getMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties,
-                         VkBool32 *memTypeFound = nullptr);
   void summary();
   virtual void execute();
   ComputeOp();

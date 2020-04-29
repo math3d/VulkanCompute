@@ -39,7 +39,7 @@ ComputeCopyImageOp::ComputeCopyImageOp(const InitParams &init_params)
                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &testBuffer,
                          &testMemory, bufferSize);
 
-    copyDeviceImageToHostBuffer(image_);
+    copyDeviceImageToHostBuffer(image_, bufferSize);
   }
 
   vkQueueWaitIdle(queue_);

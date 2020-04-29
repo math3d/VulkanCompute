@@ -38,7 +38,7 @@ void::ComputeImageToImageOp::execute() {
 
     copyHostBufferToDeviceImage(image_, hostBuffer_);
     // Debug only.
-    copyDeviceImageToHostBuffer(image_);
+    copyDeviceImageToHostBuffer(image_, bufferSize);
   }
 #endif
 #ifdef USE_FILTER
@@ -47,7 +47,7 @@ void::ComputeImageToImageOp::execute() {
     createBufferWithData(
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &filterHostBuffer_,
-        &filterHostMemory_, bufferSize, params_.computeFilter.data());
+        &filterHostMemory_, filterBufferSize, params_.computeFilter.data());
 
     createDeviceImage(filterImage_);
     createSampler(filterImage_, filterSampler_, filterView_);
@@ -55,7 +55,7 @@ void::ComputeImageToImageOp::execute() {
     // Copy to staging buffer
     copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_);
     // Debug only.
-    copyDeviceImageToHostBuffer(filterImage_);
+    copyDeviceImageToHostBuffer(filterImage_, filterBufferSize);
   }
 #endif
   {
@@ -68,7 +68,7 @@ void::ComputeImageToImageOp::execute() {
   // Command buffer creation (for compute work submission).
   prepareComputeImageToImageCommandBuffer();
   printf("%s,%d; Output: \n", __FUNCTION__, __LINE__);
-  copyDeviceImageToHostBuffer(outputImage_);
+  copyDeviceImageToHostBuffer(outputImage_, outputBufferSize);
 
   vkQueueWaitIdle(queue_);
 }

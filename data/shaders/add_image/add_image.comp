@@ -1,10 +1,11 @@
+// This case i snot tested.
 #version 450
 layout (local_size_x = 1, local_size_y = 1) in;
 layout(binding = 0) buffer Output {
    uint outputValues[ ];
 };
 layout(binding = 1, rgba8) uniform image2D values;
-//readonly
+
 layout(binding = 2, rgba8) uniform image2D filterValues;
 
 layout (constant_id = 0) const uint BUFFER_ELEMENTS = 32;
@@ -47,15 +48,5 @@ void main()
 	}
 
 	outputValues[index] = acc+100;
-	//if (index >= BUFFER_ELEMENTS) 
-	//	return;	
-    //vec4 rgba = imageLoad(values,ivec2(gl_GlobalInvocationID.xy)).rgba;
-    //vec4 drgba = imageLoad(filterValues,ivec2(gl_GlobalInvocationID.xy)).rgba;
-    //imageStore(values,  100;
-    //imageStore(values, ivec2(0,0), vec4(222,111,112,113));
-    //vec4 rgba = imageLoad(values,ivec2(0,0)).rgba;
-    //outputValues[index] = int(rgba.r+rgba.g+rgba.b+rgba.a);;
-    //outputValues[index] = int(rgba.r+rgba.g+rgba.b+rgba.a)+int(drgba.r+drgba.g+drgba.b+drgba.a);
-	//outputValues[index] = int(imageLoad(values,ivec2(gl_GlobalInvocationID.xy)).r);// + int(imageLoad(filterValues,ivec2(gl_GlobalInvocationID.xy)));
 }
 

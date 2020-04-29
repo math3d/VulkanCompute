@@ -32,7 +32,7 @@ void ComputeBufferToImageOp::execute() {
 
     copyHostBufferToDeviceImage(image_, hostBuffer_);
     // Debug only.
-    copyDeviceImageToHostBuffer(image_);
+    copyDeviceImageToHostBuffer(image_, bufferSize);
   }
 
   // Copy filter data to VRAM using a staging buffer.
@@ -48,7 +48,7 @@ void ComputeBufferToImageOp::execute() {
     // Copy to staging buffer
     copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_);
     // Debug only.
-    copyDeviceImageToHostBuffer(filterImage_);
+    copyDeviceImageToHostBuffer(filterImage_, bufferSize);
   }
 
   {

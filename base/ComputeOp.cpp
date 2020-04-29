@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "ComputeOp.h"
+#include "VulkanUtils.h"
 #include "VulkanTools.h"
 #include <vulkan/vulkan.h>
 
@@ -35,95 +36,14 @@ android_app *androidapp;
 #define DEBUG (!NDEBUG)
 
 #define BUFFER_ELEMENTS 32
-const int BUFFER_NUMBER = 3;
+// const int BUFFER_NUMBER = 3;
 #define USE_INPUT 1
 #define USE_FILTER 1
-
-
-
-
-inline VkImageCreateInfo initImageCreateInfo()
-{
-  VkImageCreateInfo imageCreateInfo{};
-  imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  return imageCreateInfo;
-}
-
-inline VkMemoryAllocateInfo memoryAllocateInfo()
-{
-  VkMemoryAllocateInfo memAllocInfo{};
-  memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  return memAllocInfo;
-}
-
-inline VkSamplerCreateInfo samplerCreateInfo()
-{
-  VkSamplerCreateInfo samplerCreateInfo{};
-  samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  samplerCreateInfo.maxAnisotropy = 1.0f;
-  return samplerCreateInfo;
-}
-
-void flushCommandBuffer(VkDevice device, VkCommandPool commandPool,
-                        VkCommandBuffer commandBuffer, VkQueue queue,
-                        bool free)
-{
-  if (commandBuffer == VK_NULL_HANDLE)
-  {
-    return;
-  }
-
-  VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
-
-  VkSubmitInfo submitInfo = {};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffer;
-  VkFenceCreateInfo fenceInfo =
-      vks::initializers::fenceCreateInfo(VK_FLAGS_NONE);
-  VkFence fence;
-  VK_CHECK_RESULT(vkCreateFence(device, &fenceInfo, nullptr, &fence));
-  // Submit to the queue
-  VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, fence));
-  VK_CHECK_RESULT(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX));
-
-  vkDestroyFence(device, fence, nullptr);
-
-  // VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
-  VK_CHECK_RESULT(vkQueueWaitIdle(queue));
-
-  if (free)
-  {
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-  }
-}
-
-VkCommandBuffer createCommandBuffer(VkDevice device, VkCommandPool commandPool,
-                                    VkCommandBufferLevel level, bool begin)
-{
-  VkCommandBuffer cmdBuffer;
-
-  VkCommandBufferAllocateInfo cmdBufAllocateInfo =
-      vks::initializers::commandBufferAllocateInfo(commandPool, level, 1);
-
-  VK_CHECK_RESULT(
-      vkAllocateCommandBuffers(device, &cmdBufAllocateInfo, &cmdBuffer));
-
-  // If requested, also start the new command buffer
-  if (begin)
-  {
-    VkCommandBufferBeginInfo cmdBufInfo =
-        vks::initializers::commandBufferBeginInfo();
-    VK_CHECK_RESULT(vkBeginCommandBuffer(cmdBuffer, &cmdBufInfo));
-  }
-
-  return cmdBuffer;
-}
+#define USE_TIMESTAMP
 
 ComputeOp::InitParams::InitParams() = default;
 
 ComputeOp::InitParams::InitParams(const InitParams &other) = default;
-
 
 VkResult ComputeOp::createBufferWithData(
     VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags,
@@ -166,8 +86,6 @@ VkResult ComputeOp::createBufferWithData(
     if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
     {
       // Flush writes to host visible buffer
-      void *mapped;
-      // vkMapMemory(device_, *memory, 0, VK_WHOLE_SIZE, 0, &mapped);
       VkMappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
       mappedRange.memory = *memory;
       mappedRange.offset = 0;
@@ -188,7 +106,7 @@ VkResult ComputeOp::createBufferWithData(
 // For Image2Image.
 
 VkResult ComputeOp::prepareTextureTarget(uint32_t width, uint32_t height,
-                                            VkFormat format)
+                                         VkFormat format)
 {
   VkFormatProperties formatProperties;
 
@@ -227,8 +145,8 @@ VkResult ComputeOp::prepareTextureTarget(uint32_t width, uint32_t height,
 
   vkGetImageMemoryRequirements(device_, outputImage_, &memReqs);
   memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = getMemoryType(
-      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  memAllocInfo.memoryTypeIndex = getMemoryType(deviceMemoryProperties_,
+                                               memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   VK_CHECK_RESULT(vkAllocateMemory(device_, &memAllocInfo, nullptr,
                                    &outputImageDeviceMemory_));
   VK_CHECK_RESULT(
@@ -272,21 +190,12 @@ VkResult ComputeOp::prepareTextureTarget(uint32_t width, uint32_t height,
   viewInfo.image = outputImage_;
   VK_CHECK_RESULT(
       vkCreateImageView(device_, &viewInfo, nullptr, &outputImageView_));
-
-  /*
-      // Initialize a descriptor for later use
-      tex->descriptor.imageLayout = tex->imageLayout;
-      tex->descriptor.imageView = tex->view;
-      tex->descriptor.sampler = tex->sampler;
-      tex->device = vulkanDevice;
-      */
   return VK_SUCCESS;
 }
 
-
 VkResult ComputeOp::copyBufferHostToDevice(VkBuffer &deviceBuffer,
-                                              VkBuffer &hostBuffer,
-                                              const VkDeviceSize &bufferSize)
+                                           VkBuffer &hostBuffer,
+                                           const VkDeviceSize &bufferSize)
 {
   // Copy to staging buffer.
   VkCommandBufferAllocateInfo cmdBufAllocateInfo =
@@ -321,7 +230,6 @@ VkResult ComputeOp::copyBufferHostToDevice(VkBuffer &deviceBuffer,
   return VK_SUCCESS;
 }
 
-
 VkResult ComputeOp::createDeviceImage(VkImage &image)
 {
   VkFormat format = imageFormat_;
@@ -345,18 +253,14 @@ VkResult ComputeOp::createDeviceImage(VkImage &image)
   VkMemoryAllocateInfo memAllocInfo = memoryAllocateInfo();
   vkGetImageMemoryRequirements(device_, image, &memReqs);
   memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = getMemoryType(
-      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  memAllocInfo.memoryTypeIndex = getMemoryType(deviceMemoryProperties_,
+                                               memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   VkDeviceMemory deviceMemory;
-  // VkMemoryAllocateInfo memAllocInfo =
-  // vks::initializers::memoryAllocateInfo();
 
   memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = getMemoryType(
-      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  // VK_CHECK_RESULT(vkAllocateMemory(device->logicalDevice, &memAllocInfo,
-  // nullptr, &deviceMemory));
+  memAllocInfo.memoryTypeIndex = getMemoryType(deviceMemoryProperties_,
+                                               memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   VK_CHECK_RESULT(
       vkAllocateMemory(device_, &memAllocInfo, nullptr, &deviceMemory));
@@ -364,9 +268,8 @@ VkResult ComputeOp::createDeviceImage(VkImage &image)
   return VK_SUCCESS;
 }
 
-
 VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler,
-                                     VkImageView &view)
+                                  VkImageView &view)
 {
   VkFormat format = imageFormat_;
   // Create a texture sampler
@@ -432,9 +335,8 @@ VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler,
   return VK_SUCCESS;
 }
 
-
 VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
-                                                   VkBuffer &hostBuffer)
+                                                VkBuffer &hostBuffer)
 {
 
   // Setup buffer copy regions for each mip level
@@ -528,8 +430,7 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   return VK_SUCCESS;
 }
 
-
-VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image)
+VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, const VkDeviceSize &bufferSize)
 {
 
   // Setup buffer copy regions for each mip level
@@ -581,9 +482,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image)
   vkGetImageMemoryRequirements(device_, dstImage, &memRequirements);
   memAllocInfo.allocationSize = memRequirements.size;
   // Memory must be host visible to copy from
-  memAllocInfo.memoryTypeIndex = getMemoryType(
-      memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  memAllocInfo.memoryTypeIndex = getMemoryType(deviceMemoryProperties_,
+                                               memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   VK_CHECK_RESULT(
       vkAllocateMemory(device_, &memAllocInfo, nullptr, &dstImageMemory));
   VK_CHECK_RESULT(vkBindImageMemory(device_, dstImage, dstImageMemory, 0));
@@ -640,7 +540,9 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image)
   printf("\n%s,%d, Read from memory:\n", __func__, __LINE__);
   const int *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
-#if 1
+  // Copy to output.
+  memcpy(params_.computeOutput.data(), data, bufferSize);
+#if 0
   DATA_TYPE out[32];
   memcpy(out, data, 32 * sizeof(DATA_TYPE));
   for (uint32_t y = 0; y < 32; y++)
@@ -713,14 +615,12 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image)
   return VK_SUCCESS;
 }
 
-
 VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const VkDeviceSize &bufferSize)
 {
   VkBuffer hostBuffer;
   VkDeviceMemory hostMemory;
 #if 1
   vkQueueWaitIdle(queue_);
-
   createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer,
@@ -754,7 +654,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const V
 
   VkBufferCopy copyRegion = {};
   copyRegion.size = bufferSize;
-  vkCmdCopyBuffer(copyCmd, hostBuffer, deviceBuffer, 1, &copyRegion);
+  vkCmdCopyBuffer(copyCmd, deviceBuffer, hostBuffer, 1, &copyRegion);
 
   // Barrier to ensure that buffer copy is finished before host reading from it
   bufferBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -773,26 +673,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const V
       1, &bufferBarrier,
       0, nullptr);
 
-  flushCommandBuffer(device_, commandPool_, commandBuffer_, queue_, true);
-  #if 0
-  VK_CHECK_RESULT(vkEndCommandBuffer(copyCmd));
-
-  VkSubmitInfo submitInfo = vks::initializers::submitInfo();
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &copyCmd;
-  VkFenceCreateInfo fenceInfo = vks::initializers::fenceCreateInfo(VK_FLAGS_NONE);
-  VkFence fence;
-  VK_CHECK_RESULT(vkCreateFence(device_, &fenceInfo, nullptr, &fence));
-
-  // Submit to the queue
-  VK_CHECK_RESULT(vkQueueSubmit(queue_, 1, &submitInfo, fence));
-  VK_CHECK_RESULT(vkWaitForFences(device_, 1, &fence, VK_TRUE, UINT64_MAX));
-  vkQueueWaitIdle(queue_);
-
-  vkDestroyFence(device_, fence, nullptr);
-  vkFreeCommandBuffers(device_, commandPool_, 1, &copyCmd);
-
-  #endif
+  flushCommandBuffer(device_, commandPool_, copyCmd, queue_, true);
 
   // Make device writes visible to the host.
   void *mapped;
@@ -807,7 +688,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const V
   memcpy(params_.computeOutput.data(), mapped, bufferSize);
 #endif
 
-#if 1
+#if 0
   DATA_TYPE out[32];
   memcpy(out, mapped, 32 * sizeof(DATA_TYPE));
   for (uint32_t y = 0; y < 32; y++)
@@ -818,95 +699,9 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const V
   }
   printf("\n");
 #endif
-
-#if 0
-	VkCommandBuffer copyCmd = createCommandBuffer(
-		device_, commandPool_, VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-
-	  VkCommandBufferBeginInfo cmdBufInfo =
-		  vks::initializers::commandBufferBeginInfo();
-
-	
-	  VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer_, &cmdBufInfo));
-	
-	  // Barrier to ensure that input buffer transfer is finished before compute
-	  // shader reads from it.
-	  VkBufferMemoryBarrier bufferBarrier =
-		  vks::initializers::bufferMemoryBarrier();
-	  bufferBarrier.buffer = outputDeviceBuffer;
-	  bufferBarrier.size = VK_WHOLE_SIZE;
-	  bufferBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-	  bufferBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	  bufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	  bufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	
-	  vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-						   VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_FLAGS_NONE, 0,
-						   nullptr, 1, &bufferBarrier, 0, nullptr);
-	
-	
-	  // Barrier to ensure that shader writes are finished before buffer is read
-	  // back from GPU.
-	  bufferBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-	  bufferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-	  bufferBarrier.buffer = outputDeviceBuffer;
-	  bufferBarrier.size = VK_WHOLE_SIZE;
-	  bufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	  bufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	
-	  vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-						   VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_FLAGS_NONE, 0,
-						   nullptr, 1, &bufferBarrier, 0, nullptr);
-	
-	  // Read back to host visible buffer.
-	  VkBufferCopy copyRegion = {};
-	  copyRegion.size = bufferSize;
-	  vkCmdCopyBuffer(commandBuffer_, outputDeviceBuffer, outputHostBuffer, 1,
-					  &copyRegion);
-	
-	  // Barrier to ensure that buffer copy is finished before host reading from
-	  // it.
-	  bufferBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	  bufferBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-	  bufferBarrier.buffer = outputHostBuffer;
-	  bufferBarrier.size = VK_WHOLE_SIZE;
-	  bufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	  bufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	
-	  vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-						   VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_FLAGS_NONE, 0,
-						   nullptr, 1, &bufferBarrier, 0, nullptr);
-	
-	  flushCommandBuffer(device_, commandPool_, copyCmd, queue_, true);
-	
-
-	  // Make device writes visible to the host.
-	  void *mapped;
-	  vkMapMemory(device_, outputHostMemory, 0, VK_WHOLE_SIZE, 0, &mapped);
-	  VkMappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
-	  mappedRange.memory = outputHostMemory;
-	  mappedRange.offset = 0;
-	  mappedRange.size = VK_WHOLE_SIZE;
-	  vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
-	
-	  // Copy to output.
-	  memcpy(params_.computeOutput.data(), mapped, bufferSize);
-#endif
-
-#if 0
-		T out[32];
-		memcpy(out, mapped, 32 * sizeof(T));
-		for (uint32_t y = 0; y < 32; y++) {
-		  printf("%f", (T)*(out + y));
-		  if (y != 31)
-			printf(",");
-		}
-	  vkUnmapMemory(device_, outputHostMemory);
-#endif
+  vkUnmapMemory(device_, hostMemory);
   return VK_SUCCESS;
 }
-
 
 VkResult ComputeOp::prepareComputeCommandBuffer(
     VkBuffer &outputDeviceBuffer, VkBuffer &outputHostBuffer,
@@ -916,6 +711,9 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
       vks::initializers::commandBufferBeginInfo();
 
   VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer_, &cmdBufInfo));
+#ifdef USE_TIMESTAMP
+  vkCmdResetQueryPool(commandBuffer_, queryPool_, 0, 2);
+#endif
 
   // Barrier to ensure that input buffer transfer is finished before compute
   // shader reads from it.
@@ -935,9 +733,15 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
   vkCmdBindPipeline(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_);
   vkCmdBindDescriptorSets(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE,
                           pipelineLayout_, 0, 1, &descriptorSet_, 0, 0);
+#ifdef USE_TIMESTAMP
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 0);
+#endif
 
   vkCmdDispatch(commandBuffer_, BUFFER_ELEMENTS, 1, 1);
-
+#ifdef USE_TIMESTAMP
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 1);
+#endif
+  // Below merges the dispatch and copy.
 #if 0
   // Barrier to ensure that shader writes are finished before buffer is read
   // back from GPU.
@@ -998,11 +802,11 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
   // Copy to output.
   memcpy(params_.computeOutput.data(), mapped, bufferSize);
 
-  T out[32];
-  memcpy(out, mapped, 32 * sizeof(T));
+  DATA_TYPE out[32];
+  memcpy(out, mapped, 32 * sizeof(DATA_TYPE));
   for (uint32_t y = 0; y < 32; y++)
   {
-    printf("%f", (T) * (out + y));
+    printf("%f", (DATA_TYPE) * (out + y));
     if (y != 31)
       printf(",");
   }
@@ -1011,9 +815,11 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
 
   vkUnmapMemory(device_, outputHostMemory);
 #endif
+#ifdef USE_TIMESTAMP
+  timeOfDispatch(device_, queryPool_);
+#endif
   return VK_SUCCESS;
 }
-
 
 VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
 {
@@ -1022,6 +828,9 @@ VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
       vks::initializers::commandBufferBeginInfo();
 
   VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer_, &cmdBufInfo));
+#ifdef USE_TIMESTAMP
+  vkCmdResetQueryPool(commandBuffer_, queryPool_, 0, 2);
+#endif
 
   // Image memory barrier to make sure that compute shader writes are finished
   // before sampling from the texture
@@ -1053,8 +862,13 @@ VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
   vkCmdBindPipeline(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_);
   vkCmdBindDescriptorSets(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE,
                           pipelineLayout_, 0, 1, &descriptorSet_, 0, 0);
-
+#ifdef USE_TIMESTAMP
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 0);
+#endif
   vkCmdDispatch(commandBuffer_, width, height, 1);
+#ifdef USE_TIMESTAMP
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 1);
+#endif
 
   imageMemoryBarrier.image = outputImage_;
   imageMemoryBarrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
@@ -1079,56 +893,13 @@ VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
   computeSubmitInfo.pCommandBuffers = &commandBuffer_;
   VK_CHECK_RESULT(vkQueueSubmit(queue_, 1, &computeSubmitInfo, fence));
   VK_CHECK_RESULT(vkWaitForFences(device_, 1, &fence, VK_TRUE, UINT64_MAX));
+
+#ifdef USE_TIMESTAMP
+  // nanoseconds.
+  timeOfDispatch(device_, queryPool_);
+#endif
   return VK_SUCCESS;
 }
-
-/**
- * Get the index of a memory type that has all the requested property bits set
- *
- * @param typeBits Bitmask with bits set for each memory type supported by the
- * resource to request for (from VkMemoryRequirements)
- * @param properties Bitmask of properties for the memory type to request
- * @param (Optional) memTypeFound Pointer to a bool that is set to true if a
- * matching memory type has been found
- *
- * @return Index of the requested memory type
- *
- * @throw Throws an exception if memTypeFound is null and no memory type could
- * be found that supports the requested properties
- */
-
-uint32_t ComputeOp::getMemoryType(uint32_t typeBits,
-                                     VkMemoryPropertyFlags properties,
-                                     VkBool32 *memTypeFound)
-{
-  for (uint32_t i = 0; i < deviceMemoryProperties_.memoryTypeCount; i++)
-  {
-    if ((typeBits & 1) == 1)
-    {
-      if ((deviceMemoryProperties_.memoryTypes[i].propertyFlags & properties) ==
-          properties)
-      {
-        if (memTypeFound)
-        {
-          *memTypeFound = true;
-        }
-        return i;
-      }
-    }
-    typeBits >>= 1;
-  }
-
-  if (memTypeFound)
-  {
-    *memTypeFound = false;
-    return 0;
-  }
-  else
-  {
-    throw std::runtime_error("Could not find a matching memory type");
-  }
-}
-
 
 VkResult ComputeOp::prepareDebugLayer()
 {
@@ -1224,7 +995,6 @@ VkResult ComputeOp::prepareDebugLayer()
   return VK_SUCCESS;
 }
 
-
 VkResult ComputeOp::prepareDevice()
 {
   // Physical device (always use first).
@@ -1281,14 +1051,22 @@ VkResult ComputeOp::prepareDevice()
   cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   VK_CHECK_RESULT(
       vkCreateCommandPool(device_, &cmdPoolInfo, nullptr, &commandPool_));
+
+  VkQueryPoolCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+  createInfo.pNext = nullptr;
+  createInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
+  createInfo.queryCount = 2;
+
+  VK_CHECK_RESULT(vkCreateQueryPool(device_, &createInfo, nullptr, &queryPool_));
+
   return VK_SUCCESS;
 }
 
-
 VkResult
 ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
-                                            VkBuffer &filterDeviceBuffer,
-                                            VkBuffer &outputDeviceBuffer)
+                                         VkBuffer &filterDeviceBuffer,
+                                         VkBuffer &outputDeviceBuffer)
 {
   // SIZE.
   std::vector<VkDescriptorPoolSize> poolSizes = {
@@ -1337,9 +1115,11 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                             0, &outputBufferDescriptor),
+#ifdef USE_INPUT
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                             1, &bufferDescriptor),
+#endif
 #ifdef USE_FILTER
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
@@ -1406,17 +1186,16 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
   return VK_SUCCESS;
 }
 
-
 VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
-                                                    VkBuffer &filterDeviceBuffer,
-                                                    VkBuffer &outputDeviceBuffer)
+                                                 VkBuffer &filterDeviceBuffer,
+                                                 VkBuffer &outputDeviceBuffer)
 {
   // SIZE.
   std::vector<VkDescriptorPoolSize> poolSizes = {
       // Compute UBO
       vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
                                             2),
-      // Graphics image samplers
+      // TODO: check if this is required.
       vks::initializers::descriptorPoolSize(
           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2),
       // Storage buffer for the scene primitives
@@ -1546,7 +1325,6 @@ VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
   VK_CHECK_RESULT(vkCreateFence(device_, &fenceCreateInfo, nullptr, &fence_));
   return VK_SUCCESS;
 }
-
 
 VkResult ComputeOp::prepareImageToImagePipeline()
 {
@@ -1693,33 +1471,40 @@ VkResult ComputeOp::prepareImageToImagePipeline()
   return VK_SUCCESS;
 }
 
-
 ComputeOp::ComputeOp() {}
-
 
 void ComputeOp::summary()
 {
-#if 0
-  LOG("Compute input:\n");
-  for (auto v : params_.computeInput) {
-    LOG("%d \t", v);
+  LOG("\nCompute input:\n");
+  for (auto v : params_.computeInput)
+  {
+    if (DATA_TYPE_ID == 0)
+      LOG("%f \t", v);
+    if (DATA_TYPE_ID == 1)
+      LOG("%d \t", v);
   }
   std::cout << std::endl;
 
-  LOG("Compute filter:\n");
-  for (auto v : params_.computeFilter) {
-    LOG("%d \t", v);
+  LOG("\nCompute filter:\n");
+  for (auto v : params_.computeFilter)
+  {
+    if (DATA_TYPE_ID == 0)
+      LOG("%f \t", v);
+    if (DATA_TYPE_ID == 1)
+      LOG("%d \t", v);
   }
   std::cout << std::endl;
-#endif
+
   LOG("\nCompute output:\n");
   for (auto v : params_.computeOutput)
   {
-    LOG("%d \t", v);
+    if (DATA_TYPE_ID == 0)
+      LOG("%f \t", v);
+    if (DATA_TYPE_ID == 1)
+      LOG("%d \t", v);
   }
   std::cout << std::endl;
 }
-
 
 ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params)
 {
@@ -1727,7 +1512,6 @@ ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params)
   // Vulkan device creation.
   prepareDevice();
 }
-
 
 void ComputeOp::execute()
 {
@@ -1800,7 +1584,6 @@ void ComputeOp::execute()
   // Output buffer contents.
   // summary();
 }
-
 
 ComputeOp::~ComputeOp()
 {
