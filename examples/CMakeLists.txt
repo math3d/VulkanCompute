@@ -41,8 +41,9 @@ endfunction(buildExamples)
 set(EXAMPLES
     add
 	add_image
-	add_image2image
 	copy_image
+	add_image2image
+
 )
 
 buildExamples()

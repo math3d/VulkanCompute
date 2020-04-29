@@ -56,16 +56,26 @@ const int width = 32;
 const int height = 1;
 const int mipLevels = 1;
 
+// TODO:
+// 1. Move InitParams into ComputeOp.
+// 2. Template the input and output, not all the functions.
+template<typename T>
+struct InitParams {
+  InitParams();
+  InitParams(const InitParams &other);
+  std::vector<T> computeInput;
+  std::vector<T> computeFilter;
+  std::vector<T> computeOutput;
+  std::string shader_path;
+};
+template<class T>
+InitParams<T>::InitParams() = default;
+
+template<class T>
+InitParams<T>::InitParams(const InitParams &other) = default;
+template<typename T>
 class ComputeOp {
 public:
-  struct InitParams {
-    InitParams();
-    InitParams(const InitParams &other);
-    std::vector<uint32_t> computeInput;
-    std::vector<uint32_t> computeFilter;
-    std::vector<uint32_t> computeOutput;
-    std::string shader_path;
-  };
   VkInstance instance_;
   VkPhysicalDevice physicalDevice_;
   VkPhysicalDeviceProperties deviceProperties_;
@@ -83,7 +93,7 @@ public:
   VkPipelineLayout pipelineLayout_;
   VkPipeline pipeline_;
   VkShaderModule shaderModule_;
-  InitParams params_;
+  InitParams<T> params_;
   VkBuffer deviceBuffer_, hostBuffer_;
   VkDeviceMemory deviceMemory_, hostMemory_;
   VkFormat imageFormat_ = VK_FORMAT_R32G32B32A32_SFLOAT;//VK_FORMAT_R32_SFLOAT;
@@ -123,8 +133,7 @@ public:
 
   VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer);
   VkResult copyDeviceImageToHostBuffer(VkImage &image);
-  VkResult copyDeviceBufferToHostBuffer(VkBuffer &hostBuffer,
-                                        VkBuffer &deviceBuffer);
+  VkResult copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const VkDeviceSize &bufferSize);
   VkResult prepareComputeCommandBuffer(VkBuffer &outputDeviceBuffer,
                                        VkBuffer &outputHostBuffer,
                                        VkDeviceMemory &outputHostMemory,
@@ -148,7 +157,7 @@ public:
   void summary();
   virtual void execute();
   ComputeOp();
-  ComputeOp(const InitParams &init_params);
+  ComputeOp(const InitParams<T> &init_params);
 
   virtual ~ComputeOp();
 };

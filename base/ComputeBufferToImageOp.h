@@ -7,10 +7,11 @@
 #define COMPUTE_BUFFER_TO_IMAGE_OP_H_
 #include "ComputeOp.h"
 
-class ComputeBufferToImageOp: public ComputeOp{
+template<typename T>
+class ComputeBufferToImageOp: public ComputeOp<T>{
 public:
   ComputeBufferToImageOp();
-  ComputeBufferToImageOp(const InitParams& init_params);
+  ComputeBufferToImageOp(const InitParams<T>& init_params);
   void execute();
   virtual ~ComputeBufferToImageOp();
 };

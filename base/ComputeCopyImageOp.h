@@ -7,10 +7,11 @@
 #define COMPUTE_COPY_IMAGE_OP_H_
 #include "ComputeOp.h"
 
-class ComputeCopyImageOp: public ComputeOp{
+template<typename T>
+class ComputeCopyImageOp: public ComputeOp<T>{
 public:
   ComputeCopyImageOp();
-  ComputeCopyImageOp(const InitParams& init_params);
+  ComputeCopyImageOp(const InitParams<T>& init_params);
   void execute();
   virtual ~ComputeCopyImageOp();
 };

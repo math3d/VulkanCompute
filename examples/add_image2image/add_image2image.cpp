@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "ComputeImageToImageOp.h"
+#include "ComputeOp.h"
 
 #define DEBUG (!NDEBUG)
 
@@ -24,26 +25,31 @@
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 void android_main(android_app *state) { android_realmain(state); }
 #else
-int main() {
 
-  ComputeOp::InitParams params;
-  std::vector<uint32_t> computeInput(BUFFER_ELEMENTS);
-  std::vector<uint32_t> computeFilter(BUFFER_ELEMENTS);
-  std::vector<uint32_t> computeOutput(BUFFER_ELEMENTS);
+int main() {
+  typedef float DATA_TYPE;
+#if 0
+  ComputeOp<DATA_TYPE>::InitParams params;
+#endif
+  InitParams<DATA_TYPE> params;
+
+  std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
+  std::vector<DATA_TYPE> computeFilter(BUFFER_ELEMENTS);
+  std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
   uint32_t start = 0x3f800000;
-  std::generate(computeInput.begin(), computeInput.end(), [&n] { return 0x3f800000+n++; });
+  std::generate(computeInput.begin(), computeInput.end(), [&n] { return 5.0+(DATA_TYPE)n++; });
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] { return 0x3f800000 +m++; });
+                [&m] {return 2.0+(float) m++;});
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
   params.shader_path = "shaders/add_image2image/add_image2image.comp.spv";
 
-  ComputeOp *computeOp = new ComputeImageToImageOp(params);
+  ComputeOp<DATA_TYPE> *computeOp = new ComputeImageToImageOp<DATA_TYPE>(params);
   computeOp->execute();
   // computeOp->summary();
   delete (computeOp);

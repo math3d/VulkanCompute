@@ -26,13 +26,14 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 int main() {
 
-  ComputeOp::InitParams params;
-  std::vector<uint32_t> computeInput(BUFFER_ELEMENTS);
-  std::vector<uint32_t> computeFilter(BUFFER_ELEMENTS);
-  std::vector<uint32_t> computeOutput(BUFFER_ELEMENTS);
+  typedef float DATA_TYPE;
+  InitParams<DATA_TYPE> params;
+  std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
+  std::vector<DATA_TYPE> computeFilter(BUFFER_ELEMENTS);
+  std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
-  std::generate(computeInput.begin(), computeInput.end(), [&n] { return n++; });
+  std::generate(computeInput.begin(), computeInput.end(), [&n] { return (DATA_TYPE)n++; });
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
@@ -40,9 +41,9 @@ int main() {
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
-  params.shader_path = "shaders/add/add.comp.spv";
+  params.shader_path = "shaders/add/add_float.comp.spv";
 
-  ComputeOp *computeOp = new ComputeOp(params);
+  ComputeOp<DATA_TYPE> *computeOp = new ComputeOp<DATA_TYPE>(params);
   computeOp->execute();
   computeOp->summary();
   delete (computeOp);

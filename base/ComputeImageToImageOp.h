@@ -3,14 +3,15 @@
 *
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
-#ifndef COMPUTE_IMAGE_IMAGE_OP_H_
-#define COMPUTE_IMAGE_IMAGE_OP_H_
+#ifndef COMPUTE_IMAGE_TO_IMAGE_OP_H_
+#define COMPUTE_IMAGE_TO_IMAGE_OP_H_
 #include "ComputeOp.h"
 
-class ComputeImageToImageOp: public ComputeOp{
+template<typename T>
+class ComputeImageToImageOp: public ComputeOp<T>{
 public:
   ComputeImageToImageOp();
-  ComputeImageToImageOp(const InitParams& init_params);
+  ComputeImageToImageOp(const InitParams<T>& init_params);
   void execute();
   virtual ~ComputeImageToImageOp();
 };

@@ -5,14 +5,19 @@
  * (http://opensource.org/licenses/MIT)
  */
 #include "ComputeCopyImageOp.h"
-ComputeCopyImageOp::ComputeCopyImageOp() {}
 
-ComputeCopyImageOp::~ComputeCopyImageOp() {}
+template class ComputeCopyImageOp<int>;
+template class ComputeCopyImageOp<float>;
 
-ComputeCopyImageOp::ComputeCopyImageOp(const InitParams &init_params)
+template <class T> ComputeCopyImageOp<T>::ComputeCopyImageOp() {}
+
+template <class T> ComputeCopyImageOp<T>::~ComputeCopyImageOp() {}
+
+template <class T>
+ComputeCopyImageOp<T>::ComputeCopyImageOp(const InitParams<T> &init_params)
     : ComputeOp(init_params) {}
 
-void ComputeCopyImageOp::execute() {
+template <class T> void ComputeCopyImageOp<T>::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
   const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
@@ -29,18 +34,17 @@ void ComputeCopyImageOp::execute() {
     createSampler(image_, sampler_, view_);
 
     copyHostBufferToDeviceImage(image_, hostBuffer_);
-	VkDeviceMemory testMemory;
-	VkBuffer testBuffer;
+    VkDeviceMemory testMemory;
+    VkBuffer testBuffer;
     createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                              VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &testBuffer,
                          &testMemory, bufferSize);
 
-	copyDeviceImageToHostBuffer(image_);
+    copyDeviceImageToHostBuffer(image_);
   }
-
 
   vkQueueWaitIdle(queue_);
 
-  //TODO: exit clean up.
+  // TODO: exit clean up.
 }

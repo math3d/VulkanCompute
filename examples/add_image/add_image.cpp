@@ -25,11 +25,11 @@
 void android_main(android_app *state) { android_realmain(state); }
 #else
 int main() {
-
-  ComputeOp::InitParams params;
-  std::vector<uint32_t> computeInput(BUFFER_ELEMENTS);
-  std::vector<uint32_t> computeFilter(BUFFER_ELEMENTS);
-  std::vector<uint32_t> computeOutput(BUFFER_ELEMENTS);
+  typedef float DATA_TYPE;
+  InitParams<DATA_TYPE> params;
+  std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
+  std::vector<DATA_TYPE> computeFilter(BUFFER_ELEMENTS);
+  std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
   std::generate(computeInput.begin(), computeInput.end(), [&n] { return 33+n++; });
@@ -42,7 +42,7 @@ int main() {
   params.computeOutput = computeOutput;
   params.shader_path = "shaders/add_image/add_image.comp.spv";
 
-  ComputeOp *computeOp = new ComputeBufferToImageOp(params);
+  ComputeOp<DATA_TYPE> *computeOp = new ComputeBufferToImageOp<DATA_TYPE>(params);
   computeOp->execute();
   computeOp->summary();
   delete (computeOp);

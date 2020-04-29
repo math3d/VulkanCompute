@@ -5,14 +5,22 @@
  * (http://opensource.org/licenses/MIT)
  */
 #include "ComputeBufferToImageOp.h"
-ComputeBufferToImageOp::ComputeBufferToImageOp() {}
 
-ComputeBufferToImageOp::~ComputeBufferToImageOp() {}
+template class ComputeBufferToImageOp<int>;
+template class ComputeBufferToImageOp<float>;
 
-ComputeBufferToImageOp::ComputeBufferToImageOp(const InitParams &init_params)
+template<class T>
+ComputeBufferToImageOp<T>::ComputeBufferToImageOp() {}
+
+template<typename T>
+ComputeBufferToImageOp<T>::~ComputeBufferToImageOp() {}
+
+template<class T>
+ComputeBufferToImageOp<T>::ComputeBufferToImageOp(const InitParams<T> &init_params)
     : ComputeOp(init_params) {}
 
-void ComputeBufferToImageOp::execute() {
+template<class T>
+void ComputeBufferToImageOp<T>::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
   const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
