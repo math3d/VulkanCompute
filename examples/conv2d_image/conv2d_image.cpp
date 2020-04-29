@@ -15,12 +15,11 @@
 #include <string.h>
 #include <vector>
 
-#include "ComputeImageToImageOp.h"
-#include "ComputeOp.h"
+#include "ComputeImageOp.h"
+
 
 #define DEBUG (!NDEBUG)
 
-#define BUFFER_ELEMENTS 32
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 void android_main(android_app *state) { android_realmain(state); }
@@ -45,7 +44,7 @@ int main() {
   params.computeOutput = computeOutput;
   params.shader_path = "shaders/add_image2image/add_image2image.comp.spv";
 
-  ComputeOp *computeOp = new ComputeImageToImageOp(params);
+  ComputeOp *computeOp = new ComputeImageOp(params);
   computeOp->execute();
   computeOp->summary();
   delete (computeOp);

@@ -4,21 +4,21 @@
  * This code is licensed under the MIT license (MIT)
  * (http://opensource.org/licenses/MIT)
  */
-#include "ComputeImageToImageOp.h"
+#include "ComputeImageOp.h"
 #define USE_INPUT 1
 #define USE_FILTER 1
 
-ComputeImageToImageOp::ComputeImageToImageOp() {}
+ComputeImageOp::ComputeImageOp() {}
 
 
-ComputeImageToImageOp::~ComputeImageToImageOp() {}
+ComputeImageOp::~ComputeImageOp() {}
 
 
-ComputeImageToImageOp::ComputeImageToImageOp(const InitParams &init_params)
+ComputeImageOp::ComputeImageOp(const InitParams &init_params)
     : ComputeOp(init_params) {}
 
 
-void::ComputeImageToImageOp::execute() {
+void::ComputeImageOp::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
   const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);

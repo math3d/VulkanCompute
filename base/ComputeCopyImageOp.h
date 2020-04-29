@@ -7,7 +7,6 @@
 #define COMPUTE_COPY_IMAGE_OP_H_
 #include "ComputeOp.h"
 
-
 class ComputeCopyImageOp: public ComputeOp{
 public:
   ComputeCopyImageOp();

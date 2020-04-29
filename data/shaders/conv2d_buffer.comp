@@ -1,0 +1,135 @@
+#version 450
+layout(binding = 0) buffer Output { float result[]; };
+
+layout(binding = 1) buffer Input { float x[]; };
+
+layout(binding = 2) buffer Filter { float w[]; };
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(constant_id = 0) const uint BUFFER_ELEMENTS = 32;
+
+int getFlatIndex(int coord, int shape) { return coord; }
+
+int getFlatIndex(ivec2 coords, ivec2 shape) {
+  return int(dot(coords, ivec2(shape.y, 1.)));
+}
+
+int getFlatIndex(ivec3 coords, ivec3 shape) {
+  return int(dot(coords, ivec3(shape.y * shape.z, shape.z, 1.)));
+}
+
+int getFlatIndex(ivec4 coords, ivec4 shape) {
+  return int(dot(coords, ivec4(shape.y * shape.z * shape.w, shape.z * shape.w,
+                               shape.w, 1.)));
+}
+ivec2 filterDims = ivec2(3, 3);
+ivec2 stride = ivec2(1, 1);
+ivec2 dilation = ivec2(1, 1);
+ivec2 pad = ivec2(0, 0);
+ivec4 xShape = ivec2(3, 3, 1, 1);
+ivec4 wShape = ivec2(3, 3, 1, 1);
+ivec4 outShape = ivec2(1, 1, 1, 1);
+
+ivec4 getOutputCoords() {
+  int d2 = int(gl_GlobalInvocationID[0]);
+  int d1 = int(gl_GlobalInvocationID[1]);
+  int index2 = int(gl_GlobalInvocationID[2]);
+  int d0 = index2 / outShape[3];
+  int d3 = index2 - d0 * outShape[3];
+  return ivec4(d0, d1, d2, d3);
+}
+
+ivec4 getCoordsFromFlatIndex(int index) {
+  int d0 = index / 524288;
+  index -= d0 * 524288;
+  int d1 = index / 4096;
+  index -= d1 * 4096;
+  int d2 = index / 32;
+  int d3 = index - d2 * 32;
+  return ivec4(d0, d1, d2, d3);
+}
+
+void setOutput(int flatIndex, float value) { result[flatIndex] = value; }
+void setOutput(int flatIndex, int value) { result[flatIndex] = float(value); }
+void setOutput(int d0, int d1, int d2, int d3, float value) {
+  int flatIndex = getFlatIndex(ivec4(d0, d1, d2, d3), outShape);
+  setOutput(flatIndex, value);
+}
+void setOutput(int d0, int d1, int d2, int d3, int value) {
+  int flatIndex = getFlatIndex(ivec4(d0, d1, d2, d3), outShape);
+  setOutput(flatIndex, value);
+}
+
+float getX(int d0, int d1, int d2, int d3) {
+  return float(x[getFlatIndex(ivec4(d0, d1, d2, d3), xShape)]);
+}
+
+float getXAtOutCoords() {
+  ivec4 coords = getOutputCoords();
+
+  return float(x[getFlatIndex(ivec4(coords[0], coords[1], coords[2], coords[3]),
+                              xShape)]);
+}
+
+float getXAtOutCoords(ivec4 coords) {
+
+  return float(x[getFlatIndex(ivec4(coords[0], coords[1], coords[2], coords[3]),
+                              xShape)]);
+}
+
+float getW(int d0, int d1, int d2, int d3) {
+  return float(W[getFlatIndex(ivec4(d0, d1, d2, d3), wShape)]);
+}
+
+float getWAtOutCoords() {
+  ivec4 coords = getOutputCoords();
+  coords[1] = 0;
+  return float(W[getFlatIndex(ivec4(coords[0], coords[1], coords[2], coords[3]),
+                              wShape)]);
+}
+
+float getWAtOutCoords(ivec4 coords) {
+  coords[1] = 0;
+  return float(W[getFlatIndex(ivec4(coords[0], coords[1], coords[2], coords[3]),
+                              wShape)]);
+}
+
+float readInp(int batch, int row, int col, int chan) {
+  ivec4 coord = ivec4(batch, row, col, chan);
+  return coordsInBounds(coord, xShape) ? getX(batch, row, col, chan) : 0;
+}
+
+float readFilt(int row, int col, int xChannel, int outChannel) {
+  ivec4 coord = ivec4(row, col, xChannel, outChannel);
+  return coordsInBounds(coord, wShape) ? getW(row, col, xChannel, outChannel)
+                                       : 0;
+}
+
+void writeResult(int batch, int row, int col, int chan, float value) {
+  ivec4 coord = ivec4(batch, row, col, chan);
+  if (coordsInBounds(coord, outShape)) {
+    setOutput(batch, row, col, chan, value);
+  }
+}
+void main() {
+  ivec4 coords = getOutputCoords();
+  int batch = coords[0];
+  int outChannel = coords[3];
+
+  float acc = 0.0;
+
+  for (int row = 0; row < filterDims[0]; ++row) {
+    for (int col = 0; col < filterDims[1]; ++col) {
+      for (int xChannel = 0; xChannel < xShape[3]; ++xChannel) {
+        float v = readInp(
+            batch, coords[1] * stride[0] + dilation[0] * row - pad[0],
+            coords[2] * stride[1] + dilation[1] * col - pad[1], xChannel);
+        float f = readFilt(row, col, xChannel, outChannel);
+        acc += v * f;
+      }
+    }
+  }
+
+  writeResult(batch, coords[1], coords[2], outChannel, acc);
+}

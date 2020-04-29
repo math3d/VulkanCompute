@@ -19,8 +19,6 @@
 
 #define DEBUG (!NDEBUG)
 
-#define BUFFER_ELEMENTS 32
-
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 void android_main(android_app *state) { android_realmain(state); }
 #else
