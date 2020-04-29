@@ -52,8 +52,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageCallback(
   return VK_FALSE;
 }
 
-const int width = 32;
-const int height = 1;
+const int width = 4;
+const int height = 8;
 const int mipLevels = 1;
 
 // TODO:

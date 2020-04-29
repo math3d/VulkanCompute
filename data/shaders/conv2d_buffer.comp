@@ -3,7 +3,7 @@ layout(binding = 0) buffer Output { float result[]; };
 
 layout(binding = 1) buffer Input { float x[]; };
 
-layout(binding = 2) buffer Filter { float w[]; };
+layout(binding = 2) buffer Filter { float W[]; };
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -23,13 +23,25 @@ int getFlatIndex(ivec4 coords, ivec4 shape) {
   return int(dot(coords, ivec4(shape.y * shape.z * shape.w, shape.z * shape.w,
                                shape.w, 1.)));
 }
-ivec2 filterDims = ivec2(3, 3);
+ivec2 filterDims = ivec2(4, 8);
 ivec2 stride = ivec2(1, 1);
 ivec2 dilation = ivec2(1, 1);
 ivec2 pad = ivec2(0, 0);
-ivec4 xShape = ivec2(3, 3, 1, 1);
-ivec4 wShape = ivec2(3, 3, 1, 1);
-ivec4 outShape = ivec2(1, 1, 1, 1);
+ivec4 xShape = ivec4(4, 8, 1, 1);
+ivec4 wShape = ivec4(4, 8, 1, 1);
+ivec4 outShape = ivec4(1, 1, 1, 1);
+
+  // Checks whether coordinates lie within the bounds of the shape.
+  bool coordsInBounds(ivec4 coord, ivec4 shape) {
+    return all(greaterThanEqual(coord, ivec4(0))) &&
+        all(lessThan(coord, shape));
+  }
+
+  bool coordsInBounds(ivec2 coord, ivec2 shape) {
+    return all(greaterThanEqual(coord, ivec2(0))) &&
+        all(lessThan(coord, shape));
+  }
+
 
 ivec4 getOutputCoords() {
   int d2 = int(gl_GlobalInvocationID[0]);

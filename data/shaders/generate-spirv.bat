@@ -1,1 +1,1 @@
-glslangvalidator -V conv2d.comp -o conv2d.comp.spv
+glslangvalidator -V conv2d_buffer.comp -o conv2d_buffer.comp.spv
