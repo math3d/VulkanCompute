@@ -7,21 +7,18 @@
 #include "ComputeImageToImageOp.h"
 #define USE_INPUT 1
 #define USE_FILTER 1
-template class ComputeImageToImageOp<int>;
-template class ComputeImageToImageOp<float>;
 
-template<class T>
-ComputeImageToImageOp<T>::ComputeImageToImageOp() {}
+ComputeImageToImageOp::ComputeImageToImageOp() {}
 
-template<class T>
-ComputeImageToImageOp<T>::~ComputeImageToImageOp() {}
 
-template<class T>
-ComputeImageToImageOp<T>::ComputeImageToImageOp(const InitParams<T> &init_params)
-    : ComputeOp<T>(init_params) {}
+ComputeImageToImageOp::~ComputeImageToImageOp() {}
 
-template<class T>
-void::ComputeImageToImageOp<T>::execute() {
+
+ComputeImageToImageOp::ComputeImageToImageOp(const InitParams &init_params)
+    : ComputeOp(init_params) {}
+
+
+void::ComputeImageToImageOp::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
   const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);

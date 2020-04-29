@@ -59,23 +59,20 @@ const int mipLevels = 1;
 // TODO:
 // 1. Move InitParams into ComputeOp.
 // 2. Template the input and output, not all the functions.
-template<typename T>
-struct InitParams {
-  InitParams();
-  InitParams(const InitParams &other);
-  std::vector<T> computeInput;
-  std::vector<T> computeFilter;
-  std::vector<T> computeOutput;
-  std::string shader_path;
-};
-template<class T>
-InitParams<T>::InitParams() = default;
+typedef float DATA_TYPE;
 
-template<class T>
-InitParams<T>::InitParams(const InitParams &other) = default;
-template<typename T>
+
 class ComputeOp {
 public:
+	struct InitParams {
+	  InitParams();
+	  InitParams(const InitParams &other);
+	  std::vector<DATA_TYPE> computeInput;
+	  std::vector<DATA_TYPE> computeFilter;
+	  std::vector<DATA_TYPE> computeOutput;
+	  std::string shader_path;
+	};
+
   VkInstance instance_;
   VkPhysicalDevice physicalDevice_;
   VkPhysicalDeviceProperties deviceProperties_;
@@ -93,7 +90,7 @@ public:
   VkPipelineLayout pipelineLayout_;
   VkPipeline pipeline_;
   VkShaderModule shaderModule_;
-  InitParams<T> params_;
+  InitParams params_;
   VkBuffer deviceBuffer_, hostBuffer_;
   VkDeviceMemory deviceMemory_, hostMemory_;
   VkFormat imageFormat_ = VK_FORMAT_R32G32B32A32_SFLOAT;//VK_FORMAT_R32_SFLOAT;
@@ -157,7 +154,7 @@ public:
   void summary();
   virtual void execute();
   ComputeOp();
-  ComputeOp(const InitParams<T> &init_params);
+  ComputeOp(const InitParams &init_params);
 
   virtual ~ComputeOp();
 };

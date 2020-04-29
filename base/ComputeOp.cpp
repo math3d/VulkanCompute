@@ -28,9 +28,6 @@
 #include "VulkanTools.h"
 #include <vulkan/vulkan.h>
 
-template class ComputeOp<int>;
-template class ComputeOp<float>;
-
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 android_app *androidapp;
 #endif
@@ -41,6 +38,9 @@ android_app *androidapp;
 const int BUFFER_NUMBER = 3;
 #define USE_INPUT 1
 #define USE_FILTER 1
+
+
+
 
 inline VkImageCreateInfo initImageCreateInfo()
 {
@@ -119,16 +119,13 @@ VkCommandBuffer createCommandBuffer(VkDevice device, VkCommandPool commandPool,
 
   return cmdBuffer;
 }
-#if 0
-template<class T>
-ComputeOp<T>::InitParams::InitParams() = default;
 
-template<class T>
-ComputeOp<T>::InitParams::InitParams(const ComputeOp<T>::InitParams &other) = default;
-#endif
+ComputeOp::InitParams::InitParams() = default;
 
-template <class T>
-VkResult ComputeOp<T>::createBufferWithData(
+ComputeOp::InitParams::InitParams(const InitParams &other) = default;
+
+
+VkResult ComputeOp::createBufferWithData(
     VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags,
     VkBuffer *buffer, VkDeviceMemory *memory, VkDeviceSize size, void *data)
 {
@@ -189,8 +186,8 @@ VkResult ComputeOp<T>::createBufferWithData(
 // Prepare a texture target that is used to store compute shader calculations
 // prepareTextureTarget
 // For Image2Image.
-template <class T>
-VkResult ComputeOp<T>::prepareTextureTarget(uint32_t width, uint32_t height,
+
+VkResult ComputeOp::prepareTextureTarget(uint32_t width, uint32_t height,
                                             VkFormat format)
 {
   VkFormatProperties formatProperties;
@@ -286,8 +283,8 @@ VkResult ComputeOp<T>::prepareTextureTarget(uint32_t width, uint32_t height,
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::copyBufferHostToDevice(VkBuffer &deviceBuffer,
+
+VkResult ComputeOp::copyBufferHostToDevice(VkBuffer &deviceBuffer,
                                               VkBuffer &hostBuffer,
                                               const VkDeviceSize &bufferSize)
 {
@@ -324,8 +321,8 @@ VkResult ComputeOp<T>::copyBufferHostToDevice(VkBuffer &deviceBuffer,
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::createDeviceImage(VkImage &image)
+
+VkResult ComputeOp::createDeviceImage(VkImage &image)
 {
   VkFormat format = imageFormat_;
   // Create optimal tiled target image on the device
@@ -367,8 +364,8 @@ VkResult ComputeOp<T>::createDeviceImage(VkImage &image)
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::createSampler(VkImage &image, VkSampler &sampler,
+
+VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler,
                                      VkImageView &view)
 {
   VkFormat format = imageFormat_;
@@ -435,8 +432,8 @@ VkResult ComputeOp<T>::createSampler(VkImage &image, VkSampler &sampler,
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::copyHostBufferToDeviceImage(VkImage &image,
+
+VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
                                                    VkBuffer &hostBuffer)
 {
 
@@ -531,8 +528,8 @@ VkResult ComputeOp<T>::copyHostBufferToDeviceImage(VkImage &image,
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::copyDeviceImageToHostBuffer(VkImage &image)
+
+VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image)
 {
 
   // Setup buffer copy regions for each mip level
@@ -644,11 +641,11 @@ VkResult ComputeOp<T>::copyDeviceImageToHostBuffer(VkImage &image)
   const int *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
 #if 1
-  T out[32];
-  memcpy(out, data, 32 * sizeof(T));
+  DATA_TYPE out[32];
+  memcpy(out, data, 32 * sizeof(DATA_TYPE));
   for (uint32_t y = 0; y < 32; y++)
   {
-    printf("%f", (T) * (out + y));
+    printf("%f", (DATA_TYPE) * (out + y));
     if (y != 31)
       printf(",");
   }
@@ -716,8 +713,8 @@ VkResult ComputeOp<T>::copyDeviceImageToHostBuffer(VkImage &image)
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const VkDeviceSize &bufferSize)
+
+VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const VkDeviceSize &bufferSize)
 {
   VkBuffer hostBuffer;
   VkDeviceMemory hostMemory;
@@ -811,11 +808,11 @@ VkResult ComputeOp<T>::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, cons
 #endif
 
 #if 1
-  T out[32];
-  memcpy(out, mapped, 32 * sizeof(T));
+  DATA_TYPE out[32];
+  memcpy(out, mapped, 32 * sizeof(DATA_TYPE));
   for (uint32_t y = 0; y < 32; y++)
   {
-    printf("%f", (T) * (out + y));
+    printf("%f", (DATA_TYPE) * (out + y));
     if (y != 31)
       printf(",");
   }
@@ -910,8 +907,8 @@ VkResult ComputeOp<T>::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, cons
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::prepareComputeCommandBuffer(
+
+VkResult ComputeOp::prepareComputeCommandBuffer(
     VkBuffer &outputDeviceBuffer, VkBuffer &outputHostBuffer,
     VkDeviceMemory &outputHostMemory, const VkDeviceSize &bufferSize)
 {
@@ -1017,8 +1014,8 @@ VkResult ComputeOp<T>::prepareComputeCommandBuffer(
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::prepareComputeImageToImageCommandBuffer()
+
+VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
 {
   vkQueueWaitIdle(queue_);
   VkCommandBufferBeginInfo cmdBufInfo =
@@ -1099,8 +1096,8 @@ VkResult ComputeOp<T>::prepareComputeImageToImageCommandBuffer()
  * @throw Throws an exception if memTypeFound is null and no memory type could
  * be found that supports the requested properties
  */
-template <class T>
-uint32_t ComputeOp<T>::getMemoryType(uint32_t typeBits,
+
+uint32_t ComputeOp::getMemoryType(uint32_t typeBits,
                                      VkMemoryPropertyFlags properties,
                                      VkBool32 *memTypeFound)
 {
@@ -1132,8 +1129,8 @@ uint32_t ComputeOp<T>::getMemoryType(uint32_t typeBits,
   }
 }
 
-template <class T>
-VkResult ComputeOp<T>::prepareDebugLayer()
+
+VkResult ComputeOp::prepareDebugLayer()
 {
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -1227,8 +1224,8 @@ VkResult ComputeOp<T>::prepareDebugLayer()
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::prepareDevice()
+
+VkResult ComputeOp::prepareDevice()
 {
   // Physical device (always use first).
   uint32_t deviceCount = 0;
@@ -1287,9 +1284,9 @@ VkResult ComputeOp<T>::prepareDevice()
   return VK_SUCCESS;
 }
 
-template <class T>
+
 VkResult
-ComputeOp<T>::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
+ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
                                             VkBuffer &filterDeviceBuffer,
                                             VkBuffer &outputDeviceBuffer)
 {
@@ -1409,8 +1406,8 @@ ComputeOp<T>::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
+
+VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
                                                     VkBuffer &filterDeviceBuffer,
                                                     VkBuffer &outputDeviceBuffer)
 {
@@ -1550,8 +1547,8 @@ VkResult ComputeOp<T>::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
   return VK_SUCCESS;
 }
 
-template <class T>
-VkResult ComputeOp<T>::prepareImageToImagePipeline()
+
+VkResult ComputeOp::prepareImageToImagePipeline()
 {
   // SIZE.
   std::vector<VkDescriptorPoolSize> poolSizes = {
@@ -1696,11 +1693,11 @@ VkResult ComputeOp<T>::prepareImageToImagePipeline()
   return VK_SUCCESS;
 }
 
-template <class T>
-ComputeOp<T>::ComputeOp() {}
 
-template <class T>
-void ComputeOp<T>::summary()
+ComputeOp::ComputeOp() {}
+
+
+void ComputeOp::summary()
 {
 #if 0
   LOG("Compute input:\n");
@@ -1723,16 +1720,16 @@ void ComputeOp<T>::summary()
   std::cout << std::endl;
 }
 
-template <class T>
-ComputeOp<T>::ComputeOp(const InitParams<T> &init_params) : params_(init_params)
+
+ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params)
 {
   prepareDebugLayer();
   // Vulkan device creation.
   prepareDevice();
 }
 
-template <class T>
-void ComputeOp<T>::execute()
+
+void ComputeOp::execute()
 {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
@@ -1804,8 +1801,8 @@ void ComputeOp<T>::execute()
   // summary();
 }
 
-template <class T>
-ComputeOp<T>::~ComputeOp()
+
+ComputeOp::~ComputeOp()
 {
   // Clean up.
   vkDestroyBuffer(device_, deviceBuffer_, nullptr);

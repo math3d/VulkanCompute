@@ -6,21 +6,15 @@
  */
 #include "ComputeBufferToImageOp.h"
 
-template class ComputeBufferToImageOp<int>;
-template class ComputeBufferToImageOp<float>;
+ComputeBufferToImageOp::ComputeBufferToImageOp() {}
 
-template<class T>
-ComputeBufferToImageOp<T>::ComputeBufferToImageOp() {}
+ComputeBufferToImageOp::~ComputeBufferToImageOp() {}
 
-template<typename T>
-ComputeBufferToImageOp<T>::~ComputeBufferToImageOp() {}
-
-template<class T>
-ComputeBufferToImageOp<T>::ComputeBufferToImageOp(const InitParams<T> &init_params)
+ComputeBufferToImageOp::ComputeBufferToImageOp(const InitParams &init_params)
     : ComputeOp(init_params) {}
 
-template<class T>
-void ComputeBufferToImageOp<T>::execute() {
+
+void ComputeBufferToImageOp::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
   const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);

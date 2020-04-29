@@ -26,7 +26,7 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 int main() {
   typedef float DATA_TYPE;
-  InitParams<DATA_TYPE> params;
+  ComputeOp::InitParams params;
   std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
   std::vector<DATA_TYPE> computeFilter(BUFFER_ELEMENTS);
   std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
@@ -42,7 +42,7 @@ int main() {
   params.computeOutput = computeOutput;
   params.shader_path = "shaders/add_image/add_image.comp.spv";
 
-  ComputeOp<DATA_TYPE> *computeOp = new ComputeBufferToImageOp<DATA_TYPE>(params);
+  ComputeOp *computeOp = new ComputeBufferToImageOp(params);
   computeOp->execute();
   computeOp->summary();
   delete (computeOp);

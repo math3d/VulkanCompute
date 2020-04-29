@@ -6,18 +6,16 @@
  */
 #include "ComputeCopyImageOp.h"
 
-template class ComputeCopyImageOp<int>;
-template class ComputeCopyImageOp<float>;
 
-template <class T> ComputeCopyImageOp<T>::ComputeCopyImageOp() {}
+ ComputeCopyImageOp::ComputeCopyImageOp() {}
 
-template <class T> ComputeCopyImageOp<T>::~ComputeCopyImageOp() {}
+ ComputeCopyImageOp::~ComputeCopyImageOp() {}
 
-template <class T>
-ComputeCopyImageOp<T>::ComputeCopyImageOp(const InitParams<T> &init_params)
+
+ComputeCopyImageOp::ComputeCopyImageOp(const InitParams &init_params)
     : ComputeOp(init_params) {}
 
-template <class T> void ComputeCopyImageOp<T>::execute() {
+ void ComputeCopyImageOp::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
   const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
