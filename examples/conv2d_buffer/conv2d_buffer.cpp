@@ -24,8 +24,21 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 int main() {
   ComputeOp::InitParams params;
+  params.inputWidth = 4;
+  params.inputHeight = 8;
+  params.filterWidth = 3;
+  params.filterHeight = 3;
+  params.outputWidth = 2;
+  params.outputHeight = 6;
+  params.DISPATCH_X = 2;
+  params.DISPATCH_Y = 6;
+  params.DISPATCH_Z = 1;
+  #undef BUFFER_ELEMENTS
+  int BUFFER_ELEMENTS = params.inputWidth * params.inputHeight;
   std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
+  BUFFER_ELEMENTS = params.filterWidth * params.filterHeight;
   std::vector<DATA_TYPE> computeFilter(BUFFER_ELEMENTS);
+  BUFFER_ELEMENTS = params.outputWidth * params.outputHeight;
   std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
@@ -33,19 +46,10 @@ int main() {
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] { return m++; });
+                [&m] { return (DATA_TYPE) m++; });
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
-  params.inputWidth = 32;
-  params.inputHeight = 1;
-  params.filterWidth = 32;
-  params.filterHeight = 1;
-  params.outputWidth = 32;
-  params.outputHeight = 1;
-  params.DISPATCH_X = 32;
-  params.DISPATCH_Y = 1;
-  params.DISPATCH_Z = 1;
 
   params.shader_path = "shaders/conv2d_buffer.comp.spv";
 

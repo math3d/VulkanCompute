@@ -27,20 +27,8 @@ void android_main(android_app *state) { android_realmain(state); }
 
 int main() {
   ComputeOp::InitParams params;
-
-  std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
-  std::vector<DATA_TYPE> computeFilter(BUFFER_ELEMENTS);
-  std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
-  // Fill input data
-  uint32_t n = 0;
-  std::generate(computeInput.begin(), computeInput.end(), [&n] { return (DATA_TYPE)n++; });
-
-  uint32_t m = 0;
-  std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] {return (float) m++;});
-  params.computeInput = computeInput;
-  params.computeFilter = computeFilter;
-  params.computeOutput = computeOutput;
+#if 1
+  // works.
   params.inputWidth = 32;
   params.inputHeight = 1;
   params.filterWidth = 32;
@@ -50,6 +38,36 @@ int main() {
   params.DISPATCH_X = 32;
   params.DISPATCH_Y = 1;
   params.DISPATCH_Z = 1;
+#endif
+#if 0
+  // TODO:notwork.
+  params.inputWidth = 4;
+  params.inputHeight = 8;
+  params.filterWidth = 4;
+  params.filterHeight = 8;
+  params.outputWidth = 4;
+  params.outputHeight = 8;
+  params.DISPATCH_X = 4;
+  params.DISPATCH_Y = 8;
+  params.DISPATCH_Z = 1;
+#endif
+  #undef BUFFER_ELEMENTS
+  int BUFFER_ELEMENTS = params.inputWidth * params.inputHeight;
+  std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
+  BUFFER_ELEMENTS = params.filterWidth * params.filterHeight;
+  std::vector<DATA_TYPE> computeFilter(BUFFER_ELEMENTS);
+  BUFFER_ELEMENTS = params.outputWidth * params.outputHeight;
+  std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
+  // Fill input data
+  uint32_t n = 0;
+  std::generate(computeInput.begin(), computeInput.end(), [&n] { return (DATA_TYPE)n++; });
+
+  uint32_t m = 0;
+  std::generate(computeFilter.begin(), computeFilter.end(),
+                [&m] { return (DATA_TYPE) m++; });
+  params.computeInput = computeInput;
+  params.computeFilter = computeFilter;
+  params.computeOutput = computeOutput;
 
   params.shader_path = "shaders/add_imager32f/add_imager32f.comp.spv";
   params.format = VK_FORMAT_R32_SFLOAT;
