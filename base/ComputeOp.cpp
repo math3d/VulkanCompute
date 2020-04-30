@@ -1124,8 +1124,9 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
 
   // Pass SSBO size via specialization constant
   struct SpecializationData {
-    uint32_t BUFFER_ELEMENT_COUNT = BUFFER_ELEMENTS;
+    uint32_t BUFFER_ELEMENT_COUNT;
   } specializationData;
+  specializationData.BUFFER_ELEMENT_COUNT = (params_.inputWidth * params_.inputHeight);
   VkSpecializationMapEntry specializationMapEntry =
       vks::initializers::specializationMapEntry(0, 0, sizeof(uint32_t));
   VkSpecializationInfo specializationInfo =
@@ -1262,8 +1263,9 @@ VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
 
   // Pass SSBO size via specialization constant
   struct SpecializationData {
-    uint32_t BUFFER_ELEMENT_COUNT = BUFFER_ELEMENTS;
+    uint32_t BUFFER_ELEMENT_COUNT;
   } specializationData;
+  specializationData.BUFFER_ELEMENT_COUNT = (params_.inputWidth * params_.inputHeight);
   VkSpecializationMapEntry specializationMapEntry =
       vks::initializers::specializationMapEntry(0, 0, sizeof(uint32_t));
   VkSpecializationInfo specializationInfo =
@@ -1403,8 +1405,9 @@ VkResult ComputeOp::prepareImageToImagePipeline() {
 
   // Pass SSBO size via specialization constant
   struct SpecializationData {
-    uint32_t BUFFER_ELEMENT_COUNT = BUFFER_ELEMENTS;
+    uint32_t BUFFER_ELEMENT_COUNT;
   } specializationData;
+  specializationData.BUFFER_ELEMENT_COUNT = (params_.inputWidth * params_.inputHeight);
   VkSpecializationMapEntry specializationMapEntry =
       vks::initializers::specializationMapEntry(0, 0, sizeof(uint32_t));
   VkSpecializationInfo specializationInfo =

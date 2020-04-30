@@ -35,8 +35,6 @@ android_app *androidapp;
 
 #define DEBUG (!NDEBUG)
 
-#define BUFFER_ELEMENTS 32
-
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #define LOG(...)                                                               \
   ((void)__android_log_print(ANDROID_LOG_INFO, "ComputeOp", __VA_ARGS__))

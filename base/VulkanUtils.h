@@ -35,7 +35,6 @@ android_app *androidapp;
 
 #define DEBUG (!NDEBUG)
 
-#define BUFFER_ELEMENTS 32
 const int BUFFER_NUMBER = 3;
 #define USE_INPUT 1
 

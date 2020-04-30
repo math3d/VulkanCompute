@@ -26,15 +26,17 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 
 int main() {
+  const int width = 256;
+  const int height = 1;
   ComputeOp::InitParams params;
-  params.inputWidth = 32;
-  params.inputHeight = 1;
-  params.filterWidth = 32;
-  params.filterHeight = 1;
-  params.outputWidth = 32;
-  params.outputHeight = 1;
-  params.DISPATCH_X = 32;
-  params.DISPATCH_Y = 1;
+  params.inputWidth = width;
+  params.inputHeight = height;
+  params.filterWidth = width;
+  params.filterHeight = height;
+  params.outputWidth = width;
+  params.outputHeight = height;
+  params.DISPATCH_X = width;
+  params.DISPATCH_Y = height;
   params.DISPATCH_Z = 1;
   #undef BUFFER_ELEMENTS
   int BUFFER_ELEMENTS = params.inputWidth * params.inputHeight;
