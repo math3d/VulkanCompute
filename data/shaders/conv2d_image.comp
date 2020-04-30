@@ -1,9 +1,9 @@
 #version 450
-layout(binding = 0) buffer Output { float result[]; };
+layout(binding = 0, rgba32f) uniform image2D result;
 
-layout(binding = 1) buffer Input { float x[]; };
-
-layout(binding = 2) buffer Filter { float W[]; };
+layout(binding = 1, rgba32f) uniform readonly image2D x;
+// readonly
+layout(binding = 2, rgba32f) uniform readonly image2D W;
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -28,13 +28,6 @@ ivec2 filterDims = ivec2(3, 3);
 ivec2 stride = ivec2(1, 1);
 ivec2 dilation = ivec2(1, 1);
 ivec2 pad = ivec2(0, 0);
-/*
-ivec4 xShape = ivec4(4, 8, 1, 1);
-ivec4 wShape = ivec4(4, 8, 1, 1);
-ivec4 outShape = ivec4(4, 8, 1, 1);
-*/
-
-
 
 ivec4 xShape = ivec4(1, 4, 8, 1);
 ivec4 wShape = ivec4(1, 4, 8, 1);

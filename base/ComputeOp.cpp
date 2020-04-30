@@ -736,7 +736,7 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 0);
 #endif
 
-  vkCmdDispatch(commandBuffer_, BUFFER_ELEMENTS, 1, 1);
+  vkCmdDispatch(commandBuffer_, DISPATCH_X, DISPATCH_Y, 1);
 #ifdef USE_TIMESTAMP
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 1);
 #endif
@@ -864,7 +864,7 @@ VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
 #ifdef USE_TIMESTAMP
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 0);
 #endif
-  vkCmdDispatch(commandBuffer_, width, height, 1);
+  vkCmdDispatch(commandBuffer_, DISPATCH_X, DISPATCH_Y, 1);
 #ifdef USE_TIMESTAMP
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 1);
 #endif
@@ -1507,6 +1507,7 @@ void ComputeOp::summary()
 
 ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params)
 {
+  imageFormat_ = init_params.format;
   prepareDebugLayer();
   // Vulkan device creation.
   prepareDevice();

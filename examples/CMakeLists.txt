@@ -40,9 +40,10 @@ endfunction(buildExamples)
 
 set(EXAMPLES
     add
-	add_image
-	conv2d_buffer
-	conv2d_image
+    add_image
+    add_imager32f
+    conv2d_buffer
+    conv2d_image
 )
 
 buildExamples()

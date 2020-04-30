@@ -55,6 +55,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageCallback(
 const int width = 4;
 const int height = 8;
 const int mipLevels = 1;
+const int DISPATCH_X = width;
+const int DISPATCH_Y = height;
+const int DISPATCH_Z = 1;
 
 // TODO:
 // 1. Move InitParams into ComputeOp.
@@ -72,6 +75,7 @@ public:
 	  std::vector<DATA_TYPE> computeFilter;
 	  std::vector<DATA_TYPE> computeOutput;
 	  std::string shader_path;
+      VkFormat format = VK_FORMAT_R32_SFLOAT;
 	};
 
   VkInstance instance_;
@@ -94,8 +98,9 @@ public:
   InitParams params_;
   VkBuffer deviceBuffer_, hostBuffer_;
   VkDeviceMemory deviceMemory_, hostMemory_;
-  VkFormat imageFormat_ = VK_FORMAT_R32G32B32A32_SFLOAT;//VK_FORMAT_R32_SFLOAT;
-      //VK_FORMAT_R32G32B32A32_SFLOAT; // VK_FORMAT_R8G8B8A8_UINT;//VK_FORMAT_R8G8B8_UINT;//VK_FORMAT_R8G8B8A8_UNORM;
+  VkFormat imageFormat_; // VK_FORMAT_R32_SFLOAT; 
+  //VK_FORMAT_R32G32B32A32_SFLOAT;
+  //VK_FORMAT_R32G32B32A32_SFLOAT; // VK_FORMAT_R8G8B8A8_UINT;//VK_FORMAT_R8G8B8_UINT;//VK_FORMAT_R8G8B8A8_UNORM;
 
   VkImage image_;
   VkImage filterImage_;
