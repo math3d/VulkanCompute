@@ -42,6 +42,16 @@ int main() {
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
+  params.inputWidth = 32;
+  params.inputHeight = 1;
+  params.filterWidth = 32;
+  params.filterHeight = 1;
+  params.outputWidth = 32;
+  params.outputHeight = 1;
+  params.DISPATCH_X = 32;
+  params.DISPATCH_Y = 1;
+  params.DISPATCH_Z = 1;
+
   params.shader_path = "shaders/add_image/add_image.comp.spv";
   params.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 

@@ -37,6 +37,16 @@ int main() {
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
+  params.inputWidth = 32;
+  params.inputHeight = 1;
+  params.filterWidth = 32;
+  params.filterHeight = 1;
+  params.outputWidth = 32;
+  params.outputHeight = 1;
+  params.DISPATCH_X = 32;
+  params.DISPATCH_Y = 1;
+  params.DISPATCH_Z = 1;
+
   params.shader_path = "shaders/conv2d_buffer.comp.spv";
 
   ComputeOp *computeOp = new ComputeOp(params);
