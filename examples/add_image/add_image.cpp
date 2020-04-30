@@ -45,12 +45,11 @@ int main() {
   std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
-  uint32_t start = 0x3f800000;
-  std::generate(computeInput.begin(), computeInput.end(), [&n] { return 5.0+(DATA_TYPE)n++; });
+  std::generate(computeInput.begin(), computeInput.end(), [&n] { return (DATA_TYPE)n++; });
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] {return 2.0+(float) m++;});
+                [&m] { return (DATA_TYPE) m++; });
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;

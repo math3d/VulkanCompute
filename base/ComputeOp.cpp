@@ -1489,9 +1489,9 @@ ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params) {
 
 void ComputeOp::execute() {
   // Prepare storage buffers.
-  const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
-  const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
-  const VkDeviceSize outputBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
+  const VkDeviceSize bufferSize = (params_.inputWidth * params_.inputHeight) * sizeof(uint32_t);
+  const VkDeviceSize filterBufferSize = (params_.filterWidth * params_.filterHeight) * sizeof(uint32_t);
+  const VkDeviceSize outputBufferSize = (params_.outputWidth * params_.outputHeight) * sizeof(uint32_t);
 
   // Copy input data to VRAM using a staging buffer.
   {
