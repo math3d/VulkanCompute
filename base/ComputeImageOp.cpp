@@ -10,15 +10,12 @@
 
 ComputeImageOp::ComputeImageOp() {}
 
-
 ComputeImageOp::~ComputeImageOp() {}
-
 
 ComputeImageOp::ComputeImageOp(const InitParams &init_params)
     : ComputeOp(init_params) {}
 
-
-void::ComputeImageOp::execute() {
+void ComputeImageOp::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
   const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
@@ -33,12 +30,14 @@ void::ComputeImageOp::execute() {
                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer_,
                          &hostMemory_, bufferSize, params_.computeInput.data());
 
-    createDeviceImage(image_);
+    createDeviceImage(image_, params_.inputWidth, params_.inputHeight);
     createSampler(image_, sampler_, view_);
 
-    copyHostBufferToDeviceImage(image_, hostBuffer_);
+    copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
+                                params_.inputHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(image_, bufferSize);
+    copyDeviceImageToHostBuffer(image_, bufferSize, params_.inputWidth,
+                                params_.inputHeight);
   }
 #endif
 #ifdef USE_FILTER
@@ -49,17 +48,20 @@ void::ComputeImageOp::execute() {
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &filterHostBuffer_,
         &filterHostMemory_, filterBufferSize, params_.computeFilter.data());
 
-    createDeviceImage(filterImage_);
+    createDeviceImage(filterImage_, params_.filterWidth, params_.filterHeight);
     createSampler(filterImage_, filterSampler_, filterView_);
 
     // Copy to staging buffer
-    copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_);
+    copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
+                                params_.filterWidth, params_.filterHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(filterImage_, filterBufferSize);
+    copyDeviceImageToHostBuffer(filterImage_, filterBufferSize,
+                                params_.filterWidth, params_.filterHeight);
   }
 #endif
   {
-    prepareTextureTarget(width, height, imageFormat_);
+    prepareTextureTarget(params_.outputWidth, params_.outputHeight,
+                         imageFormat_);
   }
 
   // Prepare compute pipeline.
@@ -68,7 +70,8 @@ void::ComputeImageOp::execute() {
   // Command buffer creation (for compute work submission).
   prepareComputeImageToImageCommandBuffer();
   printf("%s,%d; Output: \n", __FUNCTION__, __LINE__);
-  copyDeviceImageToHostBuffer(outputImage_, outputBufferSize);
+  copyDeviceImageToHostBuffer(outputImage_, outputBufferSize,
+                              params_.outputWidth, params_.outputHeight);
 
   vkQueueWaitIdle(queue_);
 }

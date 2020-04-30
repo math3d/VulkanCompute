@@ -52,12 +52,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageCallback(
   return VK_FALSE;
 }
 
-const int width = 4;
-const int height = 8;
 const int mipLevels = 1;
-const int DISPATCH_X = width;
-const int DISPATCH_Y = height;
-const int DISPATCH_Z = 1;
 
 // TODO:
 // 1. Move InitParams into ComputeOp.
@@ -65,18 +60,26 @@ const int DISPATCH_Z = 1;
 typedef float DATA_TYPE;
 const int DATA_TYPE_ID = 0;
 
-
 class ComputeOp {
 public:
-	struct InitParams {
-	  InitParams();
-	  InitParams(const InitParams &other);
-	  std::vector<DATA_TYPE> computeInput;
-	  std::vector<DATA_TYPE> computeFilter;
-	  std::vector<DATA_TYPE> computeOutput;
-	  std::string shader_path;
-      VkFormat format = VK_FORMAT_R32_SFLOAT;
-	};
+  struct InitParams {
+    InitParams();
+    InitParams(const InitParams &other);
+    std::vector<DATA_TYPE> computeInput;
+    std::vector<DATA_TYPE> computeFilter;
+    std::vector<DATA_TYPE> computeOutput;
+    int inputWidth = 32;
+    int inputHeight = 1;
+    int filterWidth = 32;
+    int filterHeight = 1;
+    int outputWidth = 32;
+    int outputHeight = 1;
+    int DISPATCH_X = 32;
+    int DISPATCH_Y = 1;
+    int DISPATCH_Z = 1;
+    std::string shader_path;
+    VkFormat format = VK_FORMAT_R32_SFLOAT;
+  };
 
   VkInstance instance_;
   VkPhysicalDevice physicalDevice_;
@@ -98,9 +101,10 @@ public:
   InitParams params_;
   VkBuffer deviceBuffer_, hostBuffer_;
   VkDeviceMemory deviceMemory_, hostMemory_;
-  VkFormat imageFormat_; // VK_FORMAT_R32_SFLOAT; 
-  //VK_FORMAT_R32G32B32A32_SFLOAT;
-  //VK_FORMAT_R32G32B32A32_SFLOAT; // VK_FORMAT_R8G8B8A8_UINT;//VK_FORMAT_R8G8B8_UINT;//VK_FORMAT_R8G8B8A8_UNORM;
+  VkFormat imageFormat_; // VK_FORMAT_R32_SFLOAT;
+  // VK_FORMAT_R32G32B32A32_SFLOAT;
+  // VK_FORMAT_R32G32B32A32_SFLOAT; //
+  // VK_FORMAT_R8G8B8A8_UINT;//VK_FORMAT_R8G8B8_UINT;//VK_FORMAT_R8G8B8A8_UNORM;
 
   VkImage image_;
   VkImage filterImage_;
@@ -131,14 +135,22 @@ public:
                                 VkMemoryPropertyFlags memoryPropertyFlags,
                                 VkBuffer *buffer, VkDeviceMemory *memory,
                                 VkDeviceSize size, void *data = nullptr);
-  VkResult createDeviceImage(VkImage &image);
+  VkResult createDeviceImage(VkImage &image, const int width, const int height);
   VkResult createSampler(VkImage &image, VkSampler &sampler, VkImageView &view);
   VkResult copyBufferHostToDevice(VkBuffer &deviceBuffer, VkBuffer &hostBuffer,
                                   const VkDeviceSize &bufferSize);
 
-  VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer);
-  VkResult copyDeviceImageToHostBuffer(VkImage &image, const VkDeviceSize &bufferSize);
-  VkResult copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const VkDeviceSize &bufferSize);
+  VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer,
+                                       const uint32_t width,
+                                       const uint32_t height);
+  VkResult copyDeviceImageToHostBuffer(VkImage &image,
+                                       const VkDeviceSize &bufferSize,
+                                       const uint32_t width,
+                                       const uint32_t height);
+  VkResult copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
+                                        const VkDeviceSize &bufferSize,
+                                        const uint32_t width,
+                                        const uint32_t height);
   VkResult prepareComputeCommandBuffer(VkBuffer &outputDeviceBuffer,
                                        VkBuffer &outputHostBuffer,
                                        VkDeviceMemory &outputHostMemory,

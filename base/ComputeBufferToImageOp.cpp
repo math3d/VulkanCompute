@@ -13,7 +13,6 @@ ComputeBufferToImageOp::~ComputeBufferToImageOp() {}
 ComputeBufferToImageOp::ComputeBufferToImageOp(const InitParams &init_params)
     : ComputeOp(init_params) {}
 
-
 void ComputeBufferToImageOp::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
@@ -27,12 +26,14 @@ void ComputeBufferToImageOp::execute() {
                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer_,
                          &hostMemory_, bufferSize, params_.computeInput.data());
 
-    createDeviceImage(image_);
+    createDeviceImage(image_, params_.inputWidth, params_.inputHeight);
     createSampler(image_, sampler_, view_);
 
-    copyHostBufferToDeviceImage(image_, hostBuffer_);
+    copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
+                                params_.inputHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(image_, bufferSize);
+    copyDeviceImageToHostBuffer(image_, bufferSize, params_.inputWidth,
+                                params_.inputHeight);
   }
 
   // Copy filter data to VRAM using a staging buffer.
@@ -42,13 +43,15 @@ void ComputeBufferToImageOp::execute() {
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &filterHostBuffer_,
         &filterHostMemory_, bufferSize, params_.computeFilter.data());
 
-    createDeviceImage(filterImage_);
+    createDeviceImage(filterImage_, params_.filterWidth, params_.filterHeight);
     createSampler(filterImage_, filterSampler_, filterView_);
 
     // Copy to staging buffer
-    copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_);
+    copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
+                                params_.filterWidth, params_.filterHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(filterImage_, bufferSize);
+    copyDeviceImageToHostBuffer(filterImage_, bufferSize, params_.filterWidth,
+                                params_.filterHeight);
   }
 
   {

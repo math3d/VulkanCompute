@@ -25,8 +25,8 @@
 #include <vector>
 
 #include "ComputeOp.h"
-#include "VulkanUtils.h"
 #include "VulkanTools.h"
+#include "VulkanUtils.h"
 #include <vulkan/vulkan.h>
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -46,8 +46,7 @@ ComputeOp::InitParams::InitParams(const InitParams &other) = default;
 
 VkResult ComputeOp::createBufferWithData(
     VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags,
-    VkBuffer *buffer, VkDeviceMemory *memory, VkDeviceSize size, void *data)
-{
+    VkBuffer *buffer, VkDeviceMemory *memory, VkDeviceSize size, void *data) {
   // Create the buffer handle
   VkBufferCreateInfo bufferCreateInfo =
       vks::initializers::bufferCreateInfo(usageFlags, size);
@@ -61,13 +60,10 @@ VkResult ComputeOp::createBufferWithData(
   memAlloc.allocationSize = memReqs.size;
   // Find a memory type index that fits the properties of the buffer
   bool memTypeFound = false;
-  for (uint32_t i = 0; i < deviceMemoryProperties_.memoryTypeCount; i++)
-  {
-    if ((memReqs.memoryTypeBits & 1) == 1)
-    {
+  for (uint32_t i = 0; i < deviceMemoryProperties_.memoryTypeCount; i++) {
+    if ((memReqs.memoryTypeBits & 1) == 1) {
       if ((deviceMemoryProperties_.memoryTypes[i].propertyFlags &
-           memoryPropertyFlags) == memoryPropertyFlags)
-      {
+           memoryPropertyFlags) == memoryPropertyFlags) {
         memAlloc.memoryTypeIndex = i;
         memTypeFound = true;
       }
@@ -77,13 +73,11 @@ VkResult ComputeOp::createBufferWithData(
   assert(memTypeFound);
   VK_CHECK_RESULT(vkAllocateMemory(device_, &memAlloc, nullptr, memory));
 
-  if (data != nullptr)
-  {
+  if (data != nullptr) {
     void *mapped;
     VK_CHECK_RESULT(vkMapMemory(device_, *memory, 0, size, 0, &mapped));
     memcpy(mapped, data, size);
-    if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-    {
+    if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
       // Flush writes to host visible buffer
       VkMappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
       mappedRange.memory = *memory;
@@ -105,8 +99,7 @@ VkResult ComputeOp::createBufferWithData(
 // For Image2Image.
 
 VkResult ComputeOp::prepareTextureTarget(uint32_t width, uint32_t height,
-                                         VkFormat format)
-{
+                                         VkFormat format) {
   VkFormatProperties formatProperties;
 
   // Get device properties for the requested texture format
@@ -144,8 +137,9 @@ VkResult ComputeOp::prepareTextureTarget(uint32_t width, uint32_t height,
 
   vkGetImageMemoryRequirements(device_, outputImage_, &memReqs);
   memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = getMemoryType(deviceMemoryProperties_,
-                                               memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  memAllocInfo.memoryTypeIndex =
+      getMemoryType(deviceMemoryProperties_, memReqs.memoryTypeBits,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   VK_CHECK_RESULT(vkAllocateMemory(device_, &memAllocInfo, nullptr,
                                    &outputImageDeviceMemory_));
   VK_CHECK_RESULT(
@@ -194,8 +188,7 @@ VkResult ComputeOp::prepareTextureTarget(uint32_t width, uint32_t height,
 
 VkResult ComputeOp::copyBufferHostToDevice(VkBuffer &deviceBuffer,
                                            VkBuffer &hostBuffer,
-                                           const VkDeviceSize &bufferSize)
-{
+                                           const VkDeviceSize &bufferSize) {
   // Copy to staging buffer.
   VkCommandBufferAllocateInfo cmdBufAllocateInfo =
       vks::initializers::commandBufferAllocateInfo(
@@ -229,8 +222,8 @@ VkResult ComputeOp::copyBufferHostToDevice(VkBuffer &deviceBuffer,
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::createDeviceImage(VkImage &image)
-{
+VkResult ComputeOp::createDeviceImage(VkImage &image, const int width,
+                                      const int height) {
   VkFormat format = imageFormat_;
   // Create optimal tiled target image on the device
   VkImageCreateInfo imageCreateInfo = initImageCreateInfo();
@@ -243,7 +236,7 @@ VkResult ComputeOp::createDeviceImage(VkImage &image)
   imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   // Set initial layout of the image to undefined
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageCreateInfo.extent = {width, height, 1};
+  imageCreateInfo.extent = {(uint32_t)width, (uint32_t)height, 1};
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
@@ -252,14 +245,16 @@ VkResult ComputeOp::createDeviceImage(VkImage &image)
   VkMemoryAllocateInfo memAllocInfo = memoryAllocateInfo();
   vkGetImageMemoryRequirements(device_, image, &memReqs);
   memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = getMemoryType(deviceMemoryProperties_,
-                                               memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  memAllocInfo.memoryTypeIndex =
+      getMemoryType(deviceMemoryProperties_, memReqs.memoryTypeBits,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   VkDeviceMemory deviceMemory;
 
   memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = getMemoryType(deviceMemoryProperties_,
-                                               memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  memAllocInfo.memoryTypeIndex =
+      getMemoryType(deviceMemoryProperties_, memReqs.memoryTypeBits,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   VK_CHECK_RESULT(
       vkAllocateMemory(device_, &memAllocInfo, nullptr, &deviceMemory));
@@ -268,8 +263,7 @@ VkResult ComputeOp::createDeviceImage(VkImage &image)
 }
 
 VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler,
-                                  VkImageView &view)
-{
+                                  VkImageView &view) {
   VkFormat format = imageFormat_;
   // Create a texture sampler
   // In Vulkan textures are accessed by samplers
@@ -335,16 +329,16 @@ VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler,
 }
 
 VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
-                                                VkBuffer &hostBuffer)
-{
+                                                VkBuffer &hostBuffer,
+                                                const uint32_t width,
+                                                const uint32_t height) {
 
   // Setup buffer copy regions for each mip level
   std::vector<VkBufferImageCopy> bufferCopyRegions;
   uint32_t offset = 0;
   VkFormat format = imageFormat_;
 
-  for (uint32_t i = 0; i < mipLevels; i++)
-  {
+  for (uint32_t i = 0; i < mipLevels; i++) {
     VkBufferImageCopy bufferCopyRegion = {};
     bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     bufferCopyRegion.imageSubresource.mipLevel = i;
@@ -429,16 +423,17 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, const VkDeviceSize &bufferSize)
-{
+VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image,
+                                                const VkDeviceSize &bufferSize,
+                                                const uint32_t width,
+                                                const uint32_t height) {
 
   // Setup buffer copy regions for each mip level
   std::vector<VkBufferImageCopy> bufferCopyRegions;
   uint32_t offset = 0;
   VkFormat format = imageFormat_;
 
-  for (uint32_t i = 0; i < mipLevels; i++)
-  {
+  for (uint32_t i = 0; i < mipLevels; i++) {
     VkBufferImageCopy bufferCopyRegion = {};
     bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     bufferCopyRegion.imageSubresource.mipLevel = i;
@@ -481,8 +476,10 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, const VkDeviceSi
   vkGetImageMemoryRequirements(device_, dstImage, &memRequirements);
   memAllocInfo.allocationSize = memRequirements.size;
   // Memory must be host visible to copy from
-  memAllocInfo.memoryTypeIndex = getMemoryType(deviceMemoryProperties_,
-                                               memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  memAllocInfo.memoryTypeIndex =
+      getMemoryType(deviceMemoryProperties_, memRequirements.memoryTypeBits,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   VK_CHECK_RESULT(
       vkAllocateMemory(device_, &memAllocInfo, nullptr, &dstImageMemory));
   VK_CHECK_RESULT(vkBindImageMemory(device_, dstImage, dstImageMemory, 0));
@@ -558,10 +555,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, const VkDeviceSi
   std::ofstream file("deviceimage.ppm", std::ios::out | std::ios::binary);
 
   // ppm header
-  file << "P6\n"
-       << width << "\n"
-       << height << "\n"
-       << 255 << "\n";
+  file << "P6\n" << width << "\n" << height << "\n" << 255 << "\n";
 
   // If source is BGR (destination is always RGB) and we can't use blit (which
   // does automatic conversion), we'll have to manually swizzle color components
@@ -582,19 +576,14 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, const VkDeviceSi
 
   // ppm binary pixel data
   printf("\n Read pixel in PPM format:\n");
-  for (uint32_t y = 0; y < height; y++)
-  {
+  for (uint32_t y = 0; y < height; y++) {
     T *row = (T *)data;
-    for (uint32_t x = 0; x < width; x++)
-    {
-      if (colorSwizzle)
-      {
+    for (uint32_t x = 0; x < width; x++) {
+      if (colorSwizzle) {
         file.write((char *)row + 2, 1);
         file.write((char *)row + 1, 1);
         file.write((char *)row, 1);
-      }
-      else
-      {
+      } else {
         file.write((char *)row, 3);
       }
       printf("%f,", (T)(*row));
@@ -614,8 +603,10 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, const VkDeviceSi
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const VkDeviceSize &bufferSize)
-{
+VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
+                                                 const VkDeviceSize &bufferSize,
+                                                 const uint32_t width,
+                                                 const uint32_t height) {
   VkBuffer hostBuffer;
   VkDeviceMemory hostMemory;
 #if 1
@@ -626,15 +617,21 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const V
                        &hostMemory, bufferSize);
 
   // Copy to staging buffer
-  VkCommandBufferAllocateInfo cmdBufAllocateInfo = vks::initializers::commandBufferAllocateInfo(commandPool_, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
+  VkCommandBufferAllocateInfo cmdBufAllocateInfo =
+      vks::initializers::commandBufferAllocateInfo(
+          commandPool_, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
   VkCommandBuffer copyCmd;
-  VK_CHECK_RESULT(vkAllocateCommandBuffers(device_, &cmdBufAllocateInfo, &copyCmd));
-  VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
+  VK_CHECK_RESULT(
+      vkAllocateCommandBuffers(device_, &cmdBufAllocateInfo, &copyCmd));
+  VkCommandBufferBeginInfo cmdBufInfo =
+      vks::initializers::commandBufferBeginInfo();
   VK_CHECK_RESULT(vkBeginCommandBuffer(copyCmd, &cmdBufInfo));
 
-  VkBufferMemoryBarrier bufferBarrier = vks::initializers::bufferMemoryBarrier();
+  VkBufferMemoryBarrier bufferBarrier =
+      vks::initializers::bufferMemoryBarrier();
 
-  // Barrier to ensure that shader writes are finished before buffer is read back from GPU
+  // Barrier to ensure that shader writes are finished before buffer is read
+  // back from GPU
   bufferBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
   bufferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
   bufferBarrier.buffer = deviceBuffer;
@@ -646,10 +643,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const V
       copyCmd,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, // VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, // VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_FLAGS_NONE,
-      0, nullptr,
-      1, &bufferBarrier,
-      0, nullptr);
+      VK_FLAGS_NONE, 0, nullptr, 1, &bufferBarrier, 0, nullptr);
 
   VkBufferCopy copyRegion = {};
   copyRegion.size = bufferSize;
@@ -667,10 +661,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const V
       copyCmd,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, // VK_PIPELINE_STAGE_TRANSFER_BIT,
       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, // VK_PIPELINE_STAGE_HOST_BIT,
-      VK_FLAGS_NONE,
-      0, nullptr,
-      1, &bufferBarrier,
-      0, nullptr);
+      VK_FLAGS_NONE, 0, nullptr, 1, &bufferBarrier, 0, nullptr);
 
   flushCommandBuffer(device_, commandPool_, copyCmd, queue_, true);
 
@@ -704,8 +695,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, const V
 
 VkResult ComputeOp::prepareComputeCommandBuffer(
     VkBuffer &outputDeviceBuffer, VkBuffer &outputHostBuffer,
-    VkDeviceMemory &outputHostMemory, const VkDeviceSize &bufferSize)
-{
+    VkDeviceMemory &outputHostMemory, const VkDeviceSize &bufferSize) {
   VkCommandBufferBeginInfo cmdBufInfo =
       vks::initializers::commandBufferBeginInfo();
 
@@ -733,12 +723,14 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
   vkCmdBindDescriptorSets(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE,
                           pipelineLayout_, 0, 1, &descriptorSet_, 0, 0);
 #ifdef USE_TIMESTAMP
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 0);
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                      queryPool_, 0);
 #endif
 
-  vkCmdDispatch(commandBuffer_, DISPATCH_X, DISPATCH_Y, 1);
+  vkCmdDispatch(commandBuffer_, params_.DISPATCH_X, params_.DISPATCH_Y, 1);
 #ifdef USE_TIMESTAMP
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 1);
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                      queryPool_, 1);
 #endif
   // Below merges the dispatch and copy.
 #if 0
@@ -776,11 +768,12 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
 #endif
   VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer_));
   VkFence fence;
-  VkFenceCreateInfo fenceInfo = vks::initializers::fenceCreateInfo(VK_FLAGS_NONE);
+  VkFenceCreateInfo fenceInfo =
+      vks::initializers::fenceCreateInfo(VK_FLAGS_NONE);
   VK_CHECK_RESULT(vkCreateFence(device_, &fenceInfo, nullptr, &fence));
 
   // Submit compute work.
-  //vkResetFences(device_, 1, &fence);
+  // vkResetFences(device_, 1, &fence);
   const VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
   VkSubmitInfo computeSubmitInfo = vks::initializers::submitInfo();
   computeSubmitInfo.pWaitDstStageMask = &waitStageMask;
@@ -820,8 +813,7 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
-{
+VkResult ComputeOp::prepareComputeImageToImageCommandBuffer() {
   vkQueueWaitIdle(queue_);
   VkCommandBufferBeginInfo cmdBufInfo =
       vks::initializers::commandBufferBeginInfo();
@@ -862,11 +854,13 @@ VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
   vkCmdBindDescriptorSets(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE,
                           pipelineLayout_, 0, 1, &descriptorSet_, 0, 0);
 #ifdef USE_TIMESTAMP
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 0);
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                      queryPool_, 0);
 #endif
-  vkCmdDispatch(commandBuffer_, DISPATCH_X, DISPATCH_Y, 1);
+  vkCmdDispatch(commandBuffer_, params_.DISPATCH_X, params_.DISPATCH_Y, 1);
 #ifdef USE_TIMESTAMP
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool_, 1);
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                      queryPool_, 1);
 #endif
 
   imageMemoryBarrier.image = outputImage_;
@@ -900,8 +894,7 @@ VkResult ComputeOp::prepareComputeImageToImageCommandBuffer()
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::prepareDebugLayer()
-{
+VkResult ComputeOp::prepareDebugLayer() {
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
   LOG("loading vulkan lib");
@@ -922,9 +915,9 @@ VkResult ComputeOp::prepareDebugLayer()
   uint32_t layerCount = 0;
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
   const char *validationLayers[] = {
-      "VK_LAYER_GOOGLE_threading", "VK_LAYER_LUNARG_parameter_validation",
+      "VK_LAYER_GOOGLE_threading",      "VK_LAYER_LUNARG_parameter_validation",
       "VK_LAYER_LUNARG_object_tracker", "VK_LAYER_LUNARG_core_validation",
-      "VK_LAYER_LUNARG_swapchain", "VK_LAYER_GOOGLE_unique_objects"};
+      "VK_LAYER_LUNARG_swapchain",      "VK_LAYER_GOOGLE_unique_objects"};
   layerCount = 6;
 #else
   const char *validationLayers[] = {"VK_LAYER_LUNARG_standard_validation"};
@@ -939,26 +932,21 @@ VkResult ComputeOp::prepareDebugLayer()
                                      instanceLayers.data());
 
   bool layersAvailable = true;
-  for (auto layerName : validationLayers)
-  {
+  for (auto layerName : validationLayers) {
     bool layerAvailable = false;
-    for (auto instanceLayer : instanceLayers)
-    {
-      if (strcmp(instanceLayer.layerName, layerName) == 0)
-      {
+    for (auto instanceLayer : instanceLayers) {
+      if (strcmp(instanceLayer.layerName, layerName) == 0) {
         layerAvailable = true;
         break;
       }
     }
-    if (!layerAvailable)
-    {
+    if (!layerAvailable) {
       layersAvailable = false;
       break;
     }
   }
 
-  if (layersAvailable)
-  {
+  if (layersAvailable) {
     instanceCreateInfo.ppEnabledLayerNames = validationLayers;
     const char *validationExt = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
     instanceCreateInfo.enabledLayerCount = layerCount;
@@ -972,8 +960,7 @@ VkResult ComputeOp::prepareDebugLayer()
   vks::android::loadVulkanFunctions(instance);
 #endif
 #if DEBUG
-  if (layersAvailable)
-  {
+  if (layersAvailable) {
     VkDebugReportCallbackCreateInfoEXT debugReportCreateInfo = {};
     debugReportCreateInfo.sType =
         VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
@@ -994,8 +981,7 @@ VkResult ComputeOp::prepareDebugLayer()
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::prepareDevice()
-{
+VkResult ComputeOp::prepareDevice() {
   // Physical device (always use first).
   uint32_t deviceCount = 0;
   VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr));
@@ -1020,10 +1006,8 @@ VkResult ComputeOp::prepareDevice()
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice_, &queueFamilyCount,
                                            queueFamilyProperties.data());
   for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size());
-       i++)
-  {
-    if (queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
-    {
+       i++) {
+    if (queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
       queueFamilyIndex_ = i;
       queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
       queueCreateInfo.queueFamilyIndex = i;
@@ -1057,7 +1041,8 @@ VkResult ComputeOp::prepareDevice()
   createInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
   createInfo.queryCount = 2;
 
-  VK_CHECK_RESULT(vkCreateQueryPool(device_, &createInfo, nullptr, &queryPool_));
+  VK_CHECK_RESULT(
+      vkCreateQueryPool(device_, &createInfo, nullptr, &queryPool_));
 
   return VK_SUCCESS;
 }
@@ -1065,8 +1050,7 @@ VkResult ComputeOp::prepareDevice()
 VkResult
 ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
                                          VkBuffer &filterDeviceBuffer,
-                                         VkBuffer &outputDeviceBuffer)
-{
+                                         VkBuffer &outputDeviceBuffer) {
   // SIZE.
   std::vector<VkDescriptorPoolSize> poolSizes = {
       vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
@@ -1139,8 +1123,7 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
       vks::initializers::computePipelineCreateInfo(pipelineLayout_, 0);
 
   // Pass SSBO size via specialization constant
-  struct SpecializationData
-  {
+  struct SpecializationData {
     uint32_t BUFFER_ELEMENT_COUNT = BUFFER_ELEMENTS;
   } specializationData;
   VkSpecializationMapEntry specializationMapEntry =
@@ -1187,8 +1170,7 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
 
 VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
                                                  VkBuffer &filterDeviceBuffer,
-                                                 VkBuffer &outputDeviceBuffer)
-{
+                                                 VkBuffer &outputDeviceBuffer) {
   // SIZE.
   std::vector<VkDescriptorPoolSize> poolSizes = {
       // Compute UBO
@@ -1279,8 +1261,7 @@ VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
       vks::initializers::computePipelineCreateInfo(pipelineLayout_, 0);
 
   // Pass SSBO size via specialization constant
-  struct SpecializationData
-  {
+  struct SpecializationData {
     uint32_t BUFFER_ELEMENT_COUNT = BUFFER_ELEMENTS;
   } specializationData;
   VkSpecializationMapEntry specializationMapEntry =
@@ -1325,8 +1306,7 @@ VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::prepareImageToImagePipeline()
-{
+VkResult ComputeOp::prepareImageToImagePipeline() {
   // SIZE.
   std::vector<VkDescriptorPoolSize> poolSizes = {
       // Compute UBO
@@ -1422,8 +1402,7 @@ VkResult ComputeOp::prepareImageToImagePipeline()
       vks::initializers::computePipelineCreateInfo(pipelineLayout_, 0);
 
   // Pass SSBO size via specialization constant
-  struct SpecializationData
-  {
+  struct SpecializationData {
     uint32_t BUFFER_ELEMENT_COUNT = BUFFER_ELEMENTS;
   } specializationData;
   VkSpecializationMapEntry specializationMapEntry =
@@ -1472,11 +1451,9 @@ VkResult ComputeOp::prepareImageToImagePipeline()
 
 ComputeOp::ComputeOp() {}
 
-void ComputeOp::summary()
-{
+void ComputeOp::summary() {
   LOG("\nCompute input:\n");
-  for (auto v : params_.computeInput)
-  {
+  for (auto v : params_.computeInput) {
     if (DATA_TYPE_ID == 0)
       LOG("%f \t", v);
     if (DATA_TYPE_ID == 1)
@@ -1485,8 +1462,7 @@ void ComputeOp::summary()
   std::cout << std::endl;
 
   LOG("\nCompute filter:\n");
-  for (auto v : params_.computeFilter)
-  {
+  for (auto v : params_.computeFilter) {
     if (DATA_TYPE_ID == 0)
       LOG("%f \t", v);
     if (DATA_TYPE_ID == 1)
@@ -1495,8 +1471,7 @@ void ComputeOp::summary()
   std::cout << std::endl;
 
   LOG("\nCompute output:\n");
-  for (auto v : params_.computeOutput)
-  {
+  for (auto v : params_.computeOutput) {
     if (DATA_TYPE_ID == 0)
       LOG("%f \t", v);
     if (DATA_TYPE_ID == 1)
@@ -1505,16 +1480,14 @@ void ComputeOp::summary()
   std::cout << std::endl;
 }
 
-ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params)
-{
+ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params) {
   imageFormat_ = init_params.format;
   prepareDebugLayer();
   // Vulkan device creation.
   prepareDevice();
 }
 
-void ComputeOp::execute()
-{
+void ComputeOp::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
   const VkDeviceSize filterBufferSize = BUFFER_ELEMENTS * sizeof(uint32_t);
@@ -1553,7 +1526,7 @@ void ComputeOp::execute()
     copyBufferHostToDevice(filterDeviceBuffer_, filterHostBuffer_,
                            filterBufferSize);
     // Debug only.
-    //copyDeviceImageToHostBuffer(image_);
+    // copyDeviceImageToHostBuffer(image_);
   }
 
   {
@@ -1577,7 +1550,8 @@ void ComputeOp::execute()
   // Command buffer creation (for compute work submission).
   prepareComputeCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
                               outputHostMemory_, outputBufferSize);
-  copyDeviceBufferToHostBuffer(outputDeviceBuffer_, bufferSize);
+  copyDeviceBufferToHostBuffer(outputDeviceBuffer_, bufferSize,
+                               params_.outputWidth, params_.outputHeight);
 
   vkQueueWaitIdle(queue_);
 
@@ -1585,8 +1559,7 @@ void ComputeOp::execute()
   // summary();
 }
 
-ComputeOp::~ComputeOp()
-{
+ComputeOp::~ComputeOp() {
   // Clean up.
   vkDestroyBuffer(device_, deviceBuffer_, nullptr);
   vkFreeMemory(device_, deviceMemory_, nullptr);
@@ -1614,8 +1587,7 @@ ComputeOp::~ComputeOp()
   vkDestroyShaderModule(device_, shaderModule_, nullptr);
   vkDestroyDevice(device_, nullptr);
 #if DEBUG
-  if (debugReportCallback)
-  {
+  if (debugReportCallback) {
     PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallback =
         reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
             vkGetInstanceProcAddr(instance_,

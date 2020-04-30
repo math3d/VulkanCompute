@@ -42,6 +42,7 @@ int main() {
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
   params.shader_path = "shaders/conv2d_image.comp.spv";
+  params.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 
   ComputeOp *computeOp = new ComputeImageOp(params);
   computeOp->execute();
