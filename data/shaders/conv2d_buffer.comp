@@ -37,7 +37,7 @@ ivec4 outShape = ivec4(4, 8, 1, 1);
 
 
 ivec4 xShape = ivec4(1, 4, 8, 1);
-ivec4 wShape = ivec4(1, 4, 8, 1);
+ivec4 wShape = ivec4(1, 3, 3, 1);
 ivec4 outShape = ivec4(1, 2, 6, 1);
 
   // Checks whether coordinates lie within the bounds of the shape.
