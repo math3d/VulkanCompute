@@ -781,6 +781,7 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
   computeSubmitInfo.pCommandBuffers = &commandBuffer_;
   VK_CHECK_RESULT(vkQueueSubmit(queue_, 1, &computeSubmitInfo, fence));
   VK_CHECK_RESULT(vkWaitForFences(device_, 1, &fence, VK_TRUE, UINT64_MAX));
+  vkDestroyFence(device_, fence, nullptr);
 #if 0
   // Make device writes visible to the host.
   void *mapped;
@@ -886,6 +887,7 @@ VkResult ComputeOp::prepareComputeImageToImageCommandBuffer() {
   computeSubmitInfo.pCommandBuffers = &commandBuffer_;
   VK_CHECK_RESULT(vkQueueSubmit(queue_, 1, &computeSubmitInfo, fence));
   VK_CHECK_RESULT(vkWaitForFences(device_, 1, &fence, VK_TRUE, UINT64_MAX));
+  vkDestroyFence(device_, fence, nullptr);
 
 #ifdef USE_TIMESTAMP
   // nanoseconds.
@@ -1183,11 +1185,6 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
           commandPool_, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
   VK_CHECK_RESULT(
       vkAllocateCommandBuffers(device_, &cmdBufAllocateInfo, &commandBuffer_));
-
-  // Fence for compute CB sync
-  VkFenceCreateInfo fenceCreateInfo =
-      vks::initializers::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-  VK_CHECK_RESULT(vkCreateFence(device_, &fenceCreateInfo, nullptr, &fence_));
   return VK_SUCCESS;
 }
 
@@ -1346,10 +1343,6 @@ VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
   VK_CHECK_RESULT(
       vkAllocateCommandBuffers(device_, &cmdBufAllocateInfo, &commandBuffer_));
 
-  // Fence for compute CB sync
-  VkFenceCreateInfo fenceCreateInfo =
-      vks::initializers::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-  VK_CHECK_RESULT(vkCreateFence(device_, &fenceCreateInfo, nullptr, &fence_));
   return VK_SUCCESS;
 }
 
@@ -1511,12 +1504,6 @@ VkResult ComputeOp::prepareImageToImagePipeline() {
   VK_CHECK_RESULT(
       vkAllocateCommandBuffers(device_, &cmdBufAllocateInfo, &commandBuffer_));
 
-#if 0
-  // Fence for compute CB sync
-  VkFenceCreateInfo fenceCreateInfo =
-      vks::initializers::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-  VK_CHECK_RESULT(vkCreateFence(device_, &fenceCreateInfo, nullptr, &fence_));
-#endif
   return VK_SUCCESS;
 }
 
@@ -1656,7 +1643,6 @@ ComputeOp::~ComputeOp() {
   vkDestroyDescriptorPool(device_, descriptorPool_, nullptr);
   vkDestroyPipeline(device_, pipeline_, nullptr);
   vkDestroyPipelineCache(device_, pipelineCache_, nullptr);
-  // vkDestroyFence(device_, fence_, nullptr);
   vkDestroyCommandPool(device_, commandPool_, nullptr);
   vkDestroyShaderModule(device_, shaderModule_, nullptr);
   vkDestroyDevice(device_, nullptr);

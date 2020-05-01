@@ -89,7 +89,7 @@ public:
   VkQueue queue_;
   VkCommandPool commandPool_;
   VkCommandBuffer commandBuffer_;
-  VkFence fence_;
+  // VkFence fence_;
   VkDescriptorPool descriptorPool_;
   VkDescriptorSetLayout descriptorSetLayout_;
   VkDescriptorSet descriptorSet_;
