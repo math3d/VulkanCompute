@@ -5,7 +5,13 @@ layout(binding = 0, rgba32f) uniform image2D outputValues;
 layout(binding = 1, rgba32f) uniform readonly image2D values;
 // readonly
 layout(binding = 2, rgba32f) uniform readonly image2D filterValues;
-layout(constant_id = 0) const uint BUFFER_ELEMENTS = 32;
+layout(constant_id = 0) const uint INPUT_WIDTH = 32;
+layout(constant_id = 1) const uint INPUT_HEIGHT = 1;
+layout(constant_id = 2) const uint FILTER_WIDTH = 32;
+layout(constant_id = 3) const uint FILTER_HEIGHT = 1;
+layout(constant_id = 4) const uint OUTPUT_WIDTH = 32;
+layout(constant_id = 5) const uint OUTPUT_HEIGHT = 1;
+
 // 32-bit IEEE 754 binary32 format representation of real number 1:
 // https://en.wikipedia.org/wiki/Single-precision_floating-point_format
 // https://www.h-schmidt.net/FloatConverter/IEEE754.html

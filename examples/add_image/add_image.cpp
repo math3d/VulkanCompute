@@ -26,7 +26,7 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 
 int main() {
-  const int width = 256;
+  const int width = 32;
   const int height = 1;
   ComputeOp::InitParams params;
   params.inputWidth = width;
