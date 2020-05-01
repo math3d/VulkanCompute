@@ -1645,6 +1645,7 @@ ComputeOp::~ComputeOp() {
   vkDestroyPipelineCache(device_, pipelineCache_, nullptr);
   vkDestroyCommandPool(device_, commandPool_, nullptr);
   vkDestroyShaderModule(device_, shaderModule_, nullptr);
+  vkDestroyQueryPool(device_, queryPool_, nullptr);
   vkDestroyDevice(device_, nullptr);
 #if DEBUG
   if (debugReportCallback) {
