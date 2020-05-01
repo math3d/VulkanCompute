@@ -690,6 +690,8 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
   printf("\n");
 #endif
   vkUnmapMemory(device_, hostMemory);
+  vkFreeMemory(device_, hostMemory, nullptr);
+  vkDestroyBuffer(device_, hostBuffer, nullptr);
   return VK_SUCCESS;
 }
 
