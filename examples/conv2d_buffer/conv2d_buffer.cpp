@@ -33,7 +33,6 @@ int main() {
   params.DISPATCH_X = params.inputWidth - params.filterWidth + 1;
   params.DISPATCH_Y = params.inputHeight - params.filterHeight + 1;
   params.DISPATCH_Z = 1;
-  #undef BUFFER_ELEMENTS
   int BUFFER_ELEMENTS = params.inputWidth * params.inputHeight;
   std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
   BUFFER_ELEMENTS = params.filterWidth * params.filterHeight;

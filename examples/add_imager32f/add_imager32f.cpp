@@ -27,31 +27,20 @@ void android_main(android_app *state) { android_realmain(state); }
 
 int main() {
   ComputeOp::InitParams params;
-#if 1
-  // works.
-  params.inputWidth = 32;
-  params.inputHeight = 1;
-  params.filterWidth = 32;
-  params.filterHeight = 1;
-  params.outputWidth = 32;
-  params.outputHeight = 1;
-  params.DISPATCH_X = 32;
-  params.DISPATCH_Y = 1;
+  // works: 32x1.
+  // not wor: 4x8.
+  // TODO:not work.
+  const int width = 4;
+  const int height = 8;
+  params.inputWidth = width;
+  params.inputHeight = height;
+  params.filterWidth = width;
+  params.filterHeight = height;
+  params.outputWidth = width;
+  params.outputHeight = height;
+  params.DISPATCH_X = width;
+  params.DISPATCH_Y = height;
   params.DISPATCH_Z = 1;
-#endif
-#if 0
-  // TODO:notwork.
-  params.inputWidth = 4;
-  params.inputHeight = 8;
-  params.filterWidth = 4;
-  params.filterHeight = 8;
-  params.outputWidth = 4;
-  params.outputHeight = 8;
-  params.DISPATCH_X = 4;
-  params.DISPATCH_Y = 8;
-  params.DISPATCH_Z = 1;
-#endif
-  #undef BUFFER_ELEMENTS
   int BUFFER_ELEMENTS = params.inputWidth * params.inputHeight;
   std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
   BUFFER_ELEMENTS = params.filterWidth * params.filterHeight;

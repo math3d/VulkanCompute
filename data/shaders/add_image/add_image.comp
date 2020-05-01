@@ -19,8 +19,8 @@ void main() {
   // uint index = gl_GlobalInvocationID.x;
   uint row = (gl_GlobalInvocationID.x);
   uint col = (gl_GlobalInvocationID.y);
-  vec4 x = imageLoad(values, ivec2(row, col)).rgba;
-  vec4 w = imageLoad(filterValues, ivec2(row, col)).rgba;
+  vec4 x = imageLoad(values, ivec2(row, col)); //.rgba;
+  vec4 w = imageLoad(filterValues, ivec2(row, col)); //.rgba;
   vec4 res = x + w;
   imageStore(outputValues, ivec2(gl_GlobalInvocationID.xy), res);
 }
