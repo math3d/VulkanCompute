@@ -28,10 +28,20 @@ int main() {
   params.inputHeight = 8;
   params.filterWidth = 3;
   params.filterHeight = 3;
+
+#if 1
+  // Core segmentation fault.
   params.outputWidth = params.inputWidth - params.filterWidth + 1;
   params.outputHeight = params.inputHeight - params.filterHeight + 1;
   params.DISPATCH_X = params.inputWidth - params.filterWidth + 1;
   params.DISPATCH_Y = params.inputHeight - params.filterHeight + 1;
+#endif
+#if 0
+  params.outputWidth = params.inputWidth;
+  params.outputHeight = params.inputHeight;
+  params.DISPATCH_X = params.inputWidth;
+  params.DISPATCH_Y = params.inputHeight;
+#endif
   params.DISPATCH_Z = 1;
   int BUFFER_ELEMENTS = params.inputWidth * params.inputHeight;
   std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
