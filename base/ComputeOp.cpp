@@ -1089,9 +1089,9 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
 
   VkDescriptorBufferInfo outputBufferDescriptor = {outputDeviceBuffer, 0,
                                                    VK_WHOLE_SIZE};
-  VkDescriptorBufferInfo bufferDescriptor = {deviceBuffer, 1, VK_WHOLE_SIZE};
+  VkDescriptorBufferInfo bufferDescriptor = {deviceBuffer, 0, VK_WHOLE_SIZE};
 
-  VkDescriptorBufferInfo filterBufferDescriptor = {filterDeviceBuffer, 2,
+  VkDescriptorBufferInfo filterBufferDescriptor = {filterDeviceBuffer, 0,
                                                    VK_WHOLE_SIZE};
 
   std::vector<VkWriteDescriptorSet> computeWriteDescriptorSets = {
