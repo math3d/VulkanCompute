@@ -521,9 +521,15 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image,
   vkGetImageSubresourceLayout(device_, dstImage, &subResource,
                               &subResourceLayout);
 
+  VkMappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
+  mappedRange.memory = dstImageMemory;
+  mappedRange.offset = 0;
+  mappedRange.size = VK_WHOLE_SIZE;
+  vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
+ 
   // Map image memory so we can start copying from it
-  printf("\n%s,%d, Read from memory:\n", __func__, __LINE__);
-  const int *data;
+  printf("\n%s,%d, Read from memory: \n", __func__, __LINE__);
+  const char *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
   memcpy(params_.computeOutput.data(), data, bufferSize);

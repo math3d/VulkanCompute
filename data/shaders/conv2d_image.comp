@@ -34,9 +34,9 @@ ivec2 stride = ivec2(1, 1);
 ivec2 dilation = ivec2(1, 1);
 ivec2 pad = ivec2(0, 0);
 
-ivec4 xShape = ivec4(1, 4, 8, 1);
-ivec4 wShape = ivec4(1, 4, 8, 1);
-ivec4 outShape = ivec4(1, 2, 6, 1);
+ivec4 xShape = ivec4(1, INPUT_WIDTH, INPUT_HEIGHT, 1);
+ivec4 wShape = ivec4(1, FILTER_WIDTH, FILTER_HEIGHT, 1);
+ivec4 outShape = ivec4(1, OUTPUT_WIDTH, OUTPUT_HEIGHT, 1);
 
   // Checks whether coordinates lie within the bounds of the shape.
   bool coordsInBounds(ivec4 coord, ivec4 shape) {
@@ -74,21 +74,24 @@ ivec4 getCoordsFromFlatIndex(int index) {
   return ivec4(d0, d1, d2, d3);
 }
 
-void setOutput(int flatIndex, float value) { result[flatIndex] = value; }
-void setOutput(int flatIndex, int value) { result[flatIndex] = float(value); }
+// void setOutput(int flatIndex, float value) { result[flatIndex] = value; }
+// void setOutput(int flatIndex, int value) { result[flatIndex] = float(value); }
 void setOutput(int d0, int d1, int d2, int d3, float value) {
-  int flatIndex = getFlatIndex(ivec4(d0, d1, d2, d3), outShape);
-  setOutput(flatIndex, value);
+  //int flatIndex = getFlatIndex(ivec4(d0, d1, d2, d3), outShape);
+  //setOutput(flatIndex, value);
+  imageStore(result, ivec2(gl_GlobalInvocationID.xy), vec4(value, 0.0, 0.0, 0.0));
 }
 void setOutput(int d0, int d1, int d2, int d3, int value) {
-  int flatIndex = getFlatIndex(ivec4(d0, d1, d2, d3), outShape);
-  setOutput(flatIndex, value);
+  // int flatIndex = getFlatIndex(ivec4(d0, d1, d2, d3), outShape);
+  // setOutput(flatIndex, value);
+  imageStore(result, ivec2(gl_GlobalInvocationID.xy), ivec4(value, 0.0, 0.0, 0.0));
 }
 
 float getX(int d0, int d1, int d2, int d3) {
-  return float(x[getFlatIndex(ivec4(d0, d1, d2, d3), xShape)]);
+  return imageLoad(x, ivec2(d1, d2)).r; 
+  //return float(x[getFlatIndex(ivec4(d0, d1, d2, d3), xShape)]);
 }
-
+/*
 float getXAtOutCoords() {
   ivec4 coords = getOutputCoords();
 
@@ -101,11 +104,12 @@ float getXAtOutCoords(ivec4 coords) {
   return float(x[getFlatIndex(ivec4(coords[0], coords[1], coords[2], coords[3]),
                               xShape)]);
 }
-
+*/
 float getW(int d0, int d1, int d2, int d3) {
-  return float(W[getFlatIndex(ivec4(d0, d1, d2, d3), wShape)]);
+  return imageLoad(W, ivec2(d1,d2)).r; 
+  //return float(W[getFlatIndex(ivec4(d0, d1, d2, d3), wShape)]);
 }
-
+/*
 float getWAtOutCoords() {
   ivec4 coords = getOutputCoords();
   coords[1] = 0;
@@ -118,7 +122,7 @@ float getWAtOutCoords(ivec4 coords) {
   return float(W[getFlatIndex(ivec4(coords[0], coords[1], coords[2], coords[3]),
                               wShape)]);
 }
-
+*/
 float readInp(int batch, int row, int col, int chan) {
   ivec4 coord = ivec4(batch, row, col, chan);
   return coordsInBounds(coord, xShape) ? getX(batch, row, col, chan) : 0;
