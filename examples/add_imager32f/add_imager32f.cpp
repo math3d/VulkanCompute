@@ -36,7 +36,8 @@ int main() {
   params.inputHeight = height;
   params.filterWidth = width;
   params.filterHeight = height;
-  params.outputWidth = width;
+  // TODO: why need to read 2* to make sure all data is read out.
+  params.outputWidth = width * 2;
   params.outputHeight = height;
   params.DISPATCH_X = width;
   params.DISPATCH_Y = height;
