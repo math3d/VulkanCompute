@@ -28,8 +28,8 @@ void android_main(android_app *state) { android_realmain(state); }
 int main() {
   // NV: works: 32x1; 4x8.
   // HD: works: 32x1; not work: 4x8.
-  const int width = 32;
-  const int height = 1;
+  const int width = 4;
+  const int height = 8;
   ComputeOp::InitParams params;
   params.inputWidth = width;
   params.inputHeight = height;
@@ -59,6 +59,7 @@ int main() {
 
   params.shader_path = "shaders/add_image/add_image.comp.spv";
   params.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+  // params.format = VK_FORMAT_R32_SFLOAT;
 
   ComputeOp *computeOp = new ComputeImageOp(params);
   computeOp->execute();

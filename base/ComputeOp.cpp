@@ -344,13 +344,21 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
     bufferCopyRegion.imageSubresource.mipLevel = i;
     bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
     bufferCopyRegion.imageSubresource.layerCount = 1;
-    bufferCopyRegion.imageExtent.width = width;
-    bufferCopyRegion.imageExtent.height = height;
+    #if 0
+    // Fix for: [VALIDATION]: IMAGE - vkCmdCopyBufferToImage(): pRegion[0] exceeds buffer size of 4 bytes. The spec valid usage text states 'The buffer region specified by each element of pRegions must be a region that is contained within srcBuffer' (https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#VUID-vkCmdCopyBufferToImage-pRegions-00171)
+    if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
+      bufferCopyRegion.imageExtent.width = width/2;
+      bufferCopyRegion.imageExtent.height = height/2;
+    } else
+    #endif
+    {
+      bufferCopyRegion.imageExtent.width = width;
+      bufferCopyRegion.imageExtent.height = height;
+    }
     bufferCopyRegion.imageExtent.depth = 1;
     bufferCopyRegion.bufferOffset = offset;
 
     bufferCopyRegions.push_back(bufferCopyRegion);
-
     // TODO: fix offset.
   }
 
@@ -375,7 +383,6 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   // safely copy our buffer data to it.
   VkImageMemoryBarrier imageMemoryBarrier =
       vks::initializers::imageMemoryBarrier();
-  ;
   imageMemoryBarrier.image = image;
   imageMemoryBarrier.subresourceRange = subresourceRange;
   imageMemoryBarrier.srcAccessMask = 0;
@@ -429,26 +436,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image,
                                                 const uint32_t height) {
 
   // Setup buffer copy regions for each mip level
-  std::vector<VkBufferImageCopy> bufferCopyRegions;
   uint32_t offset = 0;
   VkFormat format = imageFormat_;
-
-  for (uint32_t i = 0; i < mipLevels; i++) {
-    VkBufferImageCopy bufferCopyRegion = {};
-    bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    bufferCopyRegion.imageSubresource.mipLevel = i;
-    bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
-    bufferCopyRegion.imageSubresource.layerCount = 1;
-    bufferCopyRegion.imageExtent.width = width;
-    bufferCopyRegion.imageExtent.height = height;
-    bufferCopyRegion.imageExtent.depth = 1;
-    bufferCopyRegion.bufferOffset = offset;
-
-    bufferCopyRegions.push_back(bufferCopyRegion);
-
-    // TODO: fix offset.
-  }
-
   // Create the image
   // Create the linear tiled destination image to copy to and to read the memory
   // from
