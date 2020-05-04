@@ -38,7 +38,7 @@ void ComputeCopyImageOp::execute() {
                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &testBuffer,
                          &testMemory, bufferSize);
 
-    copyDeviceImageToHostBuffer(image_, bufferSize, params_.inputWidth,
+    copyDeviceImageToHostBuffer(image_, params_.computeOutput.data(), bufferSize, params_.inputWidth,
                                 params_.inputHeight);
   }
 

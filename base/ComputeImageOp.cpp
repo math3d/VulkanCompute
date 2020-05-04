@@ -36,7 +36,7 @@ void ComputeImageOp::execute() {
     copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
                                 params_.inputHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(image_, bufferSize, params_.inputWidth,
+    copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize, params_.inputWidth,
                                 params_.inputHeight);
   }
 #endif
@@ -55,7 +55,7 @@ void ComputeImageOp::execute() {
     copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
                                 params_.filterWidth, params_.filterHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(filterImage_, filterBufferSize,
+    copyDeviceImageToHostBuffer(filterImage_, params_.computeFilter.data(), filterBufferSize,
                                 params_.filterWidth, params_.filterHeight);
   }
 #endif
@@ -63,14 +63,13 @@ void ComputeImageOp::execute() {
     prepareTextureTarget(params_.outputWidth, params_.outputHeight,
                          imageFormat_);
   }
-
   // Prepare compute pipeline.
   prepareImageToImagePipeline();
 
   // Command buffer creation (for compute work submission).
   prepareComputeImageToImageCommandBuffer();
   printf("%s,%d; Output: \n", __FUNCTION__, __LINE__);
-  copyDeviceImageToHostBuffer(outputImage_, outputBufferSize,
+  copyDeviceImageToHostBuffer(outputImage_, params_.computeOutput.data(), outputBufferSize,
                               params_.outputWidth, params_.outputHeight);
 
   vkQueueWaitIdle(queue_);

@@ -141,7 +141,7 @@ public:
   VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer,
                                        const uint32_t width,
                                        const uint32_t height);
-  VkResult copyDeviceImageToHostBuffer(VkImage &image,
+  VkResult copyDeviceImageToHostBuffer(VkImage &image, void *dst,
                                        const VkDeviceSize &bufferSize,
                                        const uint32_t width,
                                        const uint32_t height);

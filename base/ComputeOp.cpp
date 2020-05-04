@@ -430,7 +430,7 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image,
+VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
                                                 const VkDeviceSize &bufferSize,
                                                 const uint32_t width,
                                                 const uint32_t height) {
@@ -532,14 +532,15 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image,
   const char *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
-  memcpy(params_.computeOutput.data(), data, bufferSize);
-#if 0
-  DATA_TYPE out[32];
-  memcpy(out, data, 32 * sizeof(DATA_TYPE));
-  for (uint32_t y = 0; y < 32; y++)
+  //  memcpy(params_.computeOutput.data(), data, bufferSize);
+  memcpy(out, data, bufferSize);
+#if 1
+  DATA_TYPE tmpout[width * height];
+  memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
+  for (uint32_t y = 0; y < width * height; y++)
   {
-    printf("%f", (DATA_TYPE) * (out + y));
-    if (y != 31)
+    printf("%f", (DATA_TYPE) * (tmpout + y));
+    if (y != width * height)
       printf(",");
   }
 #endif

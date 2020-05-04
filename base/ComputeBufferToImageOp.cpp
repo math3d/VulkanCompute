@@ -32,7 +32,7 @@ void ComputeBufferToImageOp::execute() {
     copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
                                 params_.inputHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(image_, bufferSize, params_.inputWidth,
+    copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize, params_.inputWidth,
                                 params_.inputHeight);
   }
 
@@ -50,7 +50,7 @@ void ComputeBufferToImageOp::execute() {
     copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
                                 params_.filterWidth, params_.filterHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(filterImage_, bufferSize, params_.filterWidth,
+    copyDeviceImageToHostBuffer(filterImage_,params_.computeFilter.data(),  bufferSize, params_.filterWidth,
                                 params_.filterHeight);
   }
 
