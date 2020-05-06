@@ -993,6 +993,15 @@ VkResult ComputeOp::prepareDevice() {
   // VkPhysicalDeviceProperties deviceProperties;
   vkGetPhysicalDeviceProperties(physicalDevice_, &deviceProperties_);
   LOG("GPU: %s\n", deviceProperties_.deviceName);
+
+  LOG("GPU: maxComputeWorkGroupCount = %d, %d, %d\n", deviceProperties_.limits.maxComputeWorkGroupCount[0],
+    deviceProperties_.limits.maxComputeWorkGroupCount[1],
+    deviceProperties_.limits.maxComputeWorkGroupCount[2]);
+  LOG("GPU: maxComputeWorkGroupSize = %d, %d, %d\n", deviceProperties_.limits.maxComputeWorkGroupSize[0],
+    deviceProperties_.limits.maxComputeWorkGroupSize[1],
+    deviceProperties_.limits.maxComputeWorkGroupSize[2]);
+  LOG("GPU: maxComputeSharedMemorySize = %d\n", deviceProperties_.limits.maxComputeSharedMemorySize);
+
   vkGetPhysicalDeviceMemoryProperties(physicalDevice_,
                                       &deviceMemoryProperties_);
 
