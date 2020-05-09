@@ -553,7 +553,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   // Copy to output.
   //  memcpy(params_.computeOutput.data(), data, bufferSize);
   memcpy(out, data, bufferSize);
-#if 1
+#if 0
   // Fix msvc: expression did not evaluate to a constant
 
   DATA_TYPE *tmpout = new DATA_TYPE[width * height];
