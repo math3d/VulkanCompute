@@ -44,11 +44,12 @@ int main() {
   std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
-  std::generate(computeInput.begin(), computeInput.end(), [&n] { return (DATA_TYPE)n++; });
+  std::generate(computeInput.begin(), computeInput.end(),
+                [&n] { return (DATA_TYPE)n++; });
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] { return (DATA_TYPE) m++; });
+                [&m] { return (DATA_TYPE)m++; });
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
@@ -57,7 +58,7 @@ int main() {
 
   ComputeOp *computeOp = new ComputeOp(params);
   computeOp->execute();
-  //computeOp->summary();
+  // computeOp->summary();
   delete (computeOp);
   return 0;
 }

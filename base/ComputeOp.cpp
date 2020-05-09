@@ -54,7 +54,7 @@ VkResult ComputeOp::createBufferWithData(
   VK_CHECK_RESULT(vkCreateBuffer(device_, &bufferCreateInfo, nullptr, buffer));
 
   // Create the memory backing up the buffer handle
-  printf("%s,%d; size = %d\n",__func__,__LINE__,size);
+  printf("%s,%d; size = %d\n", __func__, __LINE__, size);
   VkMemoryRequirements memReqs;
   VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
   vkGetBufferMemoryRequirements(device_, *buffer, &memReqs);
@@ -238,7 +238,7 @@ VkResult ComputeOp::createDeviceImage(VkImage &image, const int width,
   // Set initial layout of the image to undefined
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageCreateInfo.extent = {(uint32_t)width, (uint32_t)height, 1};
-  printf("%s,%d\; w=%d, h=%d\n",__func__,__LINE__,width, height);
+  printf("%s,%d\; w=%d, h=%d\n", __func__, __LINE__, width, height);
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
@@ -346,13 +346,17 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
     bufferCopyRegion.imageSubresource.mipLevel = i;
     bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
     bufferCopyRegion.imageSubresource.layerCount = 1;
-    #if 1
-    // Fix for: [VALIDATION]: IMAGE - vkCmdCopyBufferToImage(): pRegion[0] exceeds buffer size of 4 bytes. The spec valid usage text states 'The buffer region specified by each element of pRegions must be a region that is contained within srcBuffer' (https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#VUID-vkCmdCopyBufferToImage-pRegions-00171)
+#if 1
+    // Fix for: [VALIDATION]: IMAGE - vkCmdCopyBufferToImage(): pRegion[0]
+    // exceeds buffer size of 4 bytes. The spec valid usage text states 'The
+    // buffer region specified by each element of pRegions must be a region that
+    // is contained within srcBuffer'
+    // (https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#VUID-vkCmdCopyBufferToImage-pRegions-00171)
     if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
-      bufferCopyRegion.imageExtent.width = width/2;
-      bufferCopyRegion.imageExtent.height = height/2;
+      bufferCopyRegion.imageExtent.width = width / 2;
+      bufferCopyRegion.imageExtent.height = height / 2;
     } else
-    #endif
+#endif
     {
       bufferCopyRegion.imageExtent.width = width;
       bufferCopyRegion.imageExtent.height = height;
@@ -450,8 +454,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   imageCreateCI.format = imageFormat_;
   // TODO: Try more formats.Or do this in a function.
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
-    imageCreateCI.extent.width = width/2;
-    imageCreateCI.extent.height = height/2;
+    imageCreateCI.extent.width = width / 2;
+    imageCreateCI.extent.height = height / 2;
   } else {
     imageCreateCI.extent.width = width;
     imageCreateCI.extent.height = height;
@@ -506,8 +510,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   imageCopyRegion.dstSubresource.layerCount = 1;
   // TODO: Try more formats.Or do this in a function.
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
-    imageCopyRegion.extent.width = width/2;
-    imageCopyRegion.extent.height = height/2;
+    imageCopyRegion.extent.width = width / 2;
+    imageCopyRegion.extent.height = height / 2;
   } else {
     imageCopyRegion.extent.width = width;
     imageCopyRegion.extent.height = height;
@@ -540,22 +544,22 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   mappedRange.offset = 0;
   mappedRange.size = VK_WHOLE_SIZE;
   vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
- 
+
   // Map image memory so we can start copying from it
-  printf("\n%s,%d, Read from memory:  bufferSize=%d \n", __func__, __LINE__,bufferSize);
+  printf("\n%s,%d, Read from memory:  bufferSize=%d \n", __func__, __LINE__,
+         bufferSize);
   const char *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
   //  memcpy(params_.computeOutput.data(), data, bufferSize);
   memcpy(out, data, bufferSize);
 #if 1
-  //Fix msvc: expression did not evaluate to a constant
+  // Fix msvc: expression did not evaluate to a constant
 
-  DATA_TYPE* tmpout = new DATA_TYPE[width * height];
+  DATA_TYPE *tmpout = new DATA_TYPE[width * height];
   memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
   // for (uint32_t y = 0; y < width * height*sizeof(DATA_TYPE); y++)
-  for (uint32_t y = 0; y < width * height; y++)
-  {
+  for (uint32_t y = 0; y < width * height; y++) {
     printf("%f", (DATA_TYPE) * (tmpout + y));
     if (y != width * height)
       printf(",");
@@ -1014,13 +1018,16 @@ VkResult ComputeOp::prepareDevice() {
   vkGetPhysicalDeviceProperties(physicalDevice_, &deviceProperties_);
   LOG("GPU: %s\n", deviceProperties_.deviceName);
 
-  LOG("GPU: maxComputeWorkGroupCount = %d, %d, %d\n", deviceProperties_.limits.maxComputeWorkGroupCount[0],
-    deviceProperties_.limits.maxComputeWorkGroupCount[1],
-    deviceProperties_.limits.maxComputeWorkGroupCount[2]);
-  LOG("GPU: maxComputeWorkGroupSize = %d, %d, %d\n", deviceProperties_.limits.maxComputeWorkGroupSize[0],
-    deviceProperties_.limits.maxComputeWorkGroupSize[1],
-    deviceProperties_.limits.maxComputeWorkGroupSize[2]);
-  LOG("GPU: maxComputeSharedMemorySize = %d\n", deviceProperties_.limits.maxComputeSharedMemorySize);
+  LOG("GPU: maxComputeWorkGroupCount = %d, %d, %d\n",
+      deviceProperties_.limits.maxComputeWorkGroupCount[0],
+      deviceProperties_.limits.maxComputeWorkGroupCount[1],
+      deviceProperties_.limits.maxComputeWorkGroupCount[2]);
+  LOG("GPU: maxComputeWorkGroupSize = %d, %d, %d\n",
+      deviceProperties_.limits.maxComputeWorkGroupSize[0],
+      deviceProperties_.limits.maxComputeWorkGroupSize[1],
+      deviceProperties_.limits.maxComputeWorkGroupSize[2]);
+  LOG("GPU: maxComputeSharedMemorySize = %d\n",
+      deviceProperties_.limits.maxComputeSharedMemorySize);
 
   vkGetPhysicalDeviceMemoryProperties(physicalDevice_,
                                       &deviceMemoryProperties_);

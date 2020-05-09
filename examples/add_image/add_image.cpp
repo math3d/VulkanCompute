@@ -17,9 +17,7 @@
 
 #include "ComputeImageOp.h"
 
-
 #define DEBUG (!NDEBUG)
-
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 void android_main(android_app *state) { android_realmain(state); }
@@ -48,11 +46,12 @@ int main() {
   std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
-  std::generate(computeInput.begin(), computeInput.end(), [&n] { return (DATA_TYPE)n++; });
+  std::generate(computeInput.begin(), computeInput.end(),
+                [&n] { return (DATA_TYPE)n++; });
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] { return (DATA_TYPE) m++; });
+                [&m] { return (DATA_TYPE)m++; });
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;

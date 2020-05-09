@@ -17,9 +17,12 @@ ComputeImageOp::ComputeImageOp(const InitParams &init_params)
 
 void ComputeImageOp::execute() {
   // Prepare storage buffers.
-  const VkDeviceSize bufferSize = (params_.inputWidth * params_.inputHeight) * sizeof(uint32_t);
-  const VkDeviceSize filterBufferSize = (params_.filterWidth * params_.filterHeight) * sizeof(uint32_t);
-  const VkDeviceSize outputBufferSize = (params_.outputWidth * params_.outputHeight) * sizeof(uint32_t);
+  const VkDeviceSize bufferSize =
+      (params_.inputWidth * params_.inputHeight) * sizeof(uint32_t);
+  const VkDeviceSize filterBufferSize =
+      (params_.filterWidth * params_.filterHeight) * sizeof(uint32_t);
+  const VkDeviceSize outputBufferSize =
+      (params_.outputWidth * params_.outputHeight) * sizeof(uint32_t);
 
 #ifdef USE_INPUT
   // Copy input data to VRAM using a staging buffer.
@@ -36,14 +39,14 @@ void ComputeImageOp::execute() {
     copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
                                 params_.inputHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize, params_.inputWidth,
-                                params_.inputHeight);
+    copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize,
+                                params_.inputWidth, params_.inputHeight);
   }
 #endif
 #ifdef USE_FILTER
   // Copy filter data to VRAM using a staging buffer.
   {
-  printf("%s,%d Filter:\n", __FUNCTION__, __LINE__);
+    printf("%s,%d Filter:\n", __FUNCTION__, __LINE__);
     createBufferWithData(
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &filterHostBuffer_,
@@ -56,8 +59,9 @@ void ComputeImageOp::execute() {
     copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
                                 params_.filterWidth, params_.filterHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(filterImage_, params_.computeFilter.data(), filterBufferSize,
-                                params_.filterWidth, params_.filterHeight);
+    copyDeviceImageToHostBuffer(filterImage_, params_.computeFilter.data(),
+                                filterBufferSize, params_.filterWidth,
+                                params_.filterHeight);
   }
 #endif
   {
@@ -70,8 +74,9 @@ void ComputeImageOp::execute() {
   // Command buffer creation (for compute work submission).
   prepareComputeImageToImageCommandBuffer();
   printf("%s,%d; Output: \n", __FUNCTION__, __LINE__);
-  copyDeviceImageToHostBuffer(outputImage_, params_.computeOutput.data(), outputBufferSize,
-                              params_.outputWidth, params_.outputHeight);
+  copyDeviceImageToHostBuffer(outputImage_, params_.computeOutput.data(),
+                              outputBufferSize, params_.outputWidth,
+                              params_.outputHeight);
 
   vkQueueWaitIdle(queue_);
 }
