@@ -28,8 +28,8 @@ void android_main(android_app *state) { android_realmain(state); }
 int main() {
   // NV: works: 32x1; 4x8.
   // HD: works: 32x1; not work: 4x8.
-  const int width = 4;
-  const int height = 8;
+  const int width = 1024;
+  const int height = 1024;
   ComputeOp::InitParams params;
   params.inputWidth = width;
   params.inputHeight = height;

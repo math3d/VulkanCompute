@@ -54,6 +54,7 @@ VkResult ComputeOp::createBufferWithData(
   VK_CHECK_RESULT(vkCreateBuffer(device_, &bufferCreateInfo, nullptr, buffer));
 
   // Create the memory backing up the buffer handle
+  printf("%s,%d; size = %d\n",__func__,__LINE__,size);
   VkMemoryRequirements memReqs;
   VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
   vkGetBufferMemoryRequirements(device_, *buffer, &memReqs);
@@ -237,6 +238,7 @@ VkResult ComputeOp::createDeviceImage(VkImage &image, const int width,
   // Set initial layout of the image to undefined
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageCreateInfo.extent = {(uint32_t)width, (uint32_t)height, 1};
+  printf("%s,%d\; w=%d, h=%d\n",__func__,__LINE__,width, height);
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
@@ -344,7 +346,7 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
     bufferCopyRegion.imageSubresource.mipLevel = i;
     bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
     bufferCopyRegion.imageSubresource.layerCount = 1;
-    #if 0
+    #if 1
     // Fix for: [VALIDATION]: IMAGE - vkCmdCopyBufferToImage(): pRegion[0] exceeds buffer size of 4 bytes. The spec valid usage text states 'The buffer region specified by each element of pRegions must be a region that is contained within srcBuffer' (https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#VUID-vkCmdCopyBufferToImage-pRegions-00171)
     if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
       bufferCopyRegion.imageExtent.width = width/2;
@@ -446,8 +448,14 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   // Note that vkCmdBlitImage (if supported) will also do format conversions if
   // the swapchain color format would differ
   imageCreateCI.format = imageFormat_;
-  imageCreateCI.extent.width = width;
-  imageCreateCI.extent.height = height;
+  // TODO: Try more formats.Or do this in a function.
+  if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
+    imageCreateCI.extent.width = width/2;
+    imageCreateCI.extent.height = height/2;
+  } else {
+    imageCreateCI.extent.width = width;
+    imageCreateCI.extent.height = height;
+  }
   imageCreateCI.extent.depth = 1;
   imageCreateCI.arrayLayers = 1;
   imageCreateCI.mipLevels = 1;
@@ -496,8 +504,14 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   imageCopyRegion.srcSubresource.layerCount = 1;
   imageCopyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   imageCopyRegion.dstSubresource.layerCount = 1;
-  imageCopyRegion.extent.width = width;
-  imageCopyRegion.extent.height = height;
+  // TODO: Try more formats.Or do this in a function.
+  if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
+    imageCopyRegion.extent.width = width/2;
+    imageCopyRegion.extent.height = height/2;
+  } else {
+    imageCopyRegion.extent.width = width;
+    imageCopyRegion.extent.height = height;
+  }
   imageCopyRegion.extent.depth = 1;
 
   // Issue the copy command
@@ -528,7 +542,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
  
   // Map image memory so we can start copying from it
-  printf("\n%s,%d, Read from memory: \n", __func__, __LINE__);
+  printf("\n%s,%d, Read from memory:  bufferSize=%d \n", __func__, __LINE__,bufferSize);
   const char *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
@@ -537,12 +551,14 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
 #if 1
   DATA_TYPE tmpout[width * height];
   memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
+  // for (uint32_t y = 0; y < width * height*sizeof(DATA_TYPE); y++)
   for (uint32_t y = 0; y < width * height; y++)
   {
     printf("%f", (DATA_TYPE) * (tmpout + y));
     if (y != width * height)
       printf(",");
   }
+  printf("\n");
 #endif
 
 #ifdef SAVE_TO_FILE
@@ -596,6 +612,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   // Clean up resources
   vkUnmapMemory(device_, dstImageMemory);
   vkFreeMemory(device_, dstImageMemory, nullptr);
+  vkDestroyImage(device_, dstImage, nullptr);
   return VK_SUCCESS;
 }
 

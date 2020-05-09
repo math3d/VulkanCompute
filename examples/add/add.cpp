@@ -24,8 +24,8 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 int main() {
   // works: 4x8; 32x1.
-  const int width = 4;
-  const int height = 8;
+  const int width = 1024;
+  const int height = 1024;
   ComputeOp::InitParams params;
   params.inputWidth = width;
   params.inputHeight = height;
@@ -57,7 +57,7 @@ int main() {
 
   ComputeOp *computeOp = new ComputeOp(params);
   computeOp->execute();
-  computeOp->summary();
+  //computeOp->summary();
   delete (computeOp);
   return 0;
 }

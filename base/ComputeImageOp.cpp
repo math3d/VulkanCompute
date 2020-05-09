@@ -43,6 +43,7 @@ void ComputeImageOp::execute() {
 #ifdef USE_FILTER
   // Copy filter data to VRAM using a staging buffer.
   {
+  printf("%s,%d Filter:\n", __FUNCTION__, __LINE__);
     createBufferWithData(
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &filterHostBuffer_,
