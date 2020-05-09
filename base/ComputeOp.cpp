@@ -549,7 +549,9 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   //  memcpy(params_.computeOutput.data(), data, bufferSize);
   memcpy(out, data, bufferSize);
 #if 1
-  DATA_TYPE tmpout[width * height];
+  //Fix msvc: expression did not evaluate to a constant
+
+  DATA_TYPE* tmpout = new DATA_TYPE[width * height];
   memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
   // for (uint32_t y = 0; y < width * height*sizeof(DATA_TYPE); y++)
   for (uint32_t y = 0; y < width * height; y++)
@@ -558,6 +560,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
     if (y != width * height)
       printf(",");
   }
+  delete tmpout;
   printf("\n");
 #endif
 
