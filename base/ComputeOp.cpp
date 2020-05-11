@@ -1602,6 +1602,8 @@ void ComputeOp::execute() {
                          &deviceMemory_, bufferSize);
 
     copyBufferHostToDevice(deviceBuffer_, hostBuffer_, bufferSize);
+    copyDeviceBufferToHostBuffer(deviceBuffer_, bufferSize,
+                                 params_.inputWidth, params_.inputHeight);
   }
 
   // Copy filter data to VRAM using a staging buffer.
@@ -1621,7 +1623,8 @@ void ComputeOp::execute() {
     copyBufferHostToDevice(filterDeviceBuffer_, filterHostBuffer_,
                            filterBufferSize);
     // Debug only.
-    // copyDeviceImageToHostBuffer(image_);
+    copyDeviceBufferToHostBuffer(filterDeviceBuffer_, bufferSize,
+                                 params_.filterWidth, params_.filterHeight);
   }
 
   {
