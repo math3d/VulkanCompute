@@ -1613,7 +1613,7 @@ void ComputeOp::execute() {
     createBufferWithData(
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &filterHostBuffer_,
-        &filterHostMemory_, bufferSize, params_.computeFilter.data());
+        &filterHostMemory_, filterBufferSize, params_.computeFilter.data());
 
     createBufferWithData(
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
@@ -1626,7 +1626,7 @@ void ComputeOp::execute() {
                            filterBufferSize);
     // Debug only.
     copyDeviceBufferToHostBuffer(filterDeviceBuffer_,
-                                 params_.computeFilter.data(), bufferSize,
+                                 params_.computeFilter.data(), filterBufferSize,
                                  params_.filterWidth, params_.filterHeight);
   }
 
@@ -1651,7 +1651,7 @@ void ComputeOp::execute() {
   // Command buffer creation (for compute work submission).
   prepareComputeCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
                               outputHostMemory_, outputBufferSize);
-  copyDeviceBufferToHostBuffer(outputDeviceBuffer_,params_.computeOutput.data(), bufferSize,
+  copyDeviceBufferToHostBuffer(outputDeviceBuffer_,params_.computeOutput.data(), outputBufferSize,
                                params_.outputWidth, params_.outputHeight);
 
   vkQueueWaitIdle(queue_);
