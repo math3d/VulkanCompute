@@ -436,7 +436,7 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
+VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
                                                 const VkDeviceSize &bufferSize,
                                                 const uint32_t width,
                                                 const uint32_t height) {
@@ -552,7 +552,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
   //  memcpy(params_.computeOutput.data(), data, bufferSize);
-  memcpy(out, data, bufferSize);
+  memcpy(dst, data, bufferSize);
 #if 0
   // Fix msvc: expression did not evaluate to a constant
 
@@ -624,6 +624,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *out,
 }
 
 VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
+                                                 void *dst,
                                                  const VkDeviceSize &bufferSize,
                                                  const uint32_t width,
                                                  const uint32_t height) {
@@ -695,7 +696,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
   vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
 
   // Copy to output.
-  memcpy(params_.computeOutput.data(), mapped, bufferSize);
+  memcpy(dst, mapped, bufferSize);
 #endif
 
 #if 0
@@ -1602,8 +1603,9 @@ void ComputeOp::execute() {
                          &deviceMemory_, bufferSize);
 
     copyBufferHostToDevice(deviceBuffer_, hostBuffer_, bufferSize);
-    copyDeviceBufferToHostBuffer(deviceBuffer_, bufferSize,
-                                 params_.inputWidth, params_.inputHeight);
+    copyDeviceBufferToHostBuffer(deviceBuffer_, params_.computeInput.data(),
+                                 bufferSize, params_.inputWidth,
+                                 params_.inputHeight);
   }
 
   // Copy filter data to VRAM using a staging buffer.
@@ -1623,7 +1625,8 @@ void ComputeOp::execute() {
     copyBufferHostToDevice(filterDeviceBuffer_, filterHostBuffer_,
                            filterBufferSize);
     // Debug only.
-    copyDeviceBufferToHostBuffer(filterDeviceBuffer_, bufferSize,
+    copyDeviceBufferToHostBuffer(filterDeviceBuffer_,
+                                 params_.computeFilter.data(), bufferSize,
                                  params_.filterWidth, params_.filterHeight);
   }
 
@@ -1648,7 +1651,7 @@ void ComputeOp::execute() {
   // Command buffer creation (for compute work submission).
   prepareComputeCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
                               outputHostMemory_, outputBufferSize);
-  copyDeviceBufferToHostBuffer(outputDeviceBuffer_, bufferSize,
+  copyDeviceBufferToHostBuffer(outputDeviceBuffer_,params_.computeOutput.data(), bufferSize,
                                params_.outputWidth, params_.outputHeight);
 
   vkQueueWaitIdle(queue_);
