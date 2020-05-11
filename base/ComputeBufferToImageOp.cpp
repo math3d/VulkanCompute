@@ -15,9 +15,12 @@ ComputeBufferToImageOp::ComputeBufferToImageOp(const InitParams &init_params)
 
 void ComputeBufferToImageOp::execute() {
   // Prepare storage buffers.
-  const VkDeviceSize bufferSize = (params_.inputWidth * params_.inputHeight) * sizeof(uint32_t);
-  const VkDeviceSize filterBufferSize = (params_.filterWidth * params_.filterHeight) * sizeof(uint32_t);
-  const VkDeviceSize outputBufferSize = (params_.outputWidth * params_.outputHeight) * sizeof(uint32_t);
+  const VkDeviceSize bufferSize =
+      (params_.inputWidth * params_.inputHeight) * sizeof(uint32_t);
+  const VkDeviceSize filterBufferSize =
+      (params_.filterWidth * params_.filterHeight) * sizeof(uint32_t);
+  const VkDeviceSize outputBufferSize =
+      (params_.outputWidth * params_.outputHeight) * sizeof(uint32_t);
 
   // Copy input data to VRAM using a staging buffer.
   {
@@ -32,8 +35,8 @@ void ComputeBufferToImageOp::execute() {
     copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
                                 params_.inputHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize, params_.inputWidth,
-                                params_.inputHeight);
+    copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize,
+                                params_.inputWidth, params_.inputHeight);
   }
 
   // Copy filter data to VRAM using a staging buffer.
@@ -50,7 +53,8 @@ void ComputeBufferToImageOp::execute() {
     copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
                                 params_.filterWidth, params_.filterHeight);
     // Debug only.
-    copyDeviceImageToHostBuffer(filterImage_,params_.computeFilter.data(),  bufferSize, params_.filterWidth,
+    copyDeviceImageToHostBuffer(filterImage_, params_.computeFilter.data(),
+                                bufferSize, params_.filterWidth,
                                 params_.filterHeight);
   }
 
@@ -73,8 +77,8 @@ void ComputeBufferToImageOp::execute() {
                                outputDeviceBuffer_);
 
   // Command buffer creation (for compute work submission).
-  prepareComputeCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
-                              outputHostMemory_, outputBufferSize);
+  prepareCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
+                       outputHostMemory_, outputBufferSize);
 
   vkQueueWaitIdle(queue_);
 

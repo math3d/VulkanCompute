@@ -6,20 +6,20 @@
 
 Vulkan源码的获得：
 ```
-$git clone https://github.com/math3d/Vulkan.git
-$git submodule init
-$git submodule update
+git clone https://github.com/math3d/Vulkan.git
+git submodule init
+git submodule update
 ```
 
 Vulkan源码的编译-Ubuntu 18.04 （编译之前，需要先去https://www.lunarg.com/vulkan-sdk/ 安装Vulkan SDK）：
 ```
-$cmake CMakeLists.txt 
-$make
+cmake CMakeLists.txt
+make
 ```
 
 Vulkan源码的编译-Windows 10（编译之前，需要先去https://www.lunarg.com/vulkan-sdk/ 安装Vulkan SDK）：
 ```
-$cmake -G "Visual Studio 15 2017 Win64"
+cmake -G "Visual Studio 15 2017 Win64"
 ```
 用Visual Studio 打开项目VulkanComputeExamples.sln，进行编译。
 
@@ -36,4 +36,4 @@ git checkout -b 726d14d02c95bb21ec9e43807751b491d295dd3c
 ```
 
 ## 其他
-Makefile部分基于SaschaWillems开源的[示例程序](https://github.com/SaschaWillems/Vulkan).
+Makefile部分基于SaschaWillems开源的[示例程序]修改而来(https://github.com/SaschaWillems/Vulkan).

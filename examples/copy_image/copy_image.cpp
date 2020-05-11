@@ -31,11 +31,12 @@ int main() {
   std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
   // Fill input data
   uint32_t n = 0;
-  std::generate(computeInput.begin(), computeInput.end(), [&n] { return 33+n++; });
+  std::generate(computeInput.begin(), computeInput.end(),
+                [&n] { return 33 + n++; });
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] { return 125+m++; });
+                [&m] { return 125 + m++; });
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
@@ -43,7 +44,7 @@ int main() {
 
   ComputeOp *computeOp = new ComputeCopyImageOp(params);
   computeOp->execute();
-  //computeOp->summary();
+  // computeOp->summary();
   delete (computeOp);
   return 0;
 }

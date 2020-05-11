@@ -53,8 +53,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageCallback(
 const int mipLevels = 1;
 
 // TODO:
-// 1. Move InitParams into ComputeOp.
-// 2. Template the input and output, not all the functions.
+// 1. Template the input and output.
 typedef float DATA_TYPE;
 const int DATA_TYPE_ID = 0;
 
@@ -78,6 +77,53 @@ public:
     std::string shader_path;
     VkFormat format = VK_FORMAT_R32_SFLOAT;
   };
+  void summaryOfInput() const;
+  void summary() const;
+  virtual void execute();
+  ComputeOp();
+  ComputeOp(const InitParams &init_params);
+
+  virtual ~ComputeOp();
+
+protected:
+  VkResult createBufferWithData(VkBufferUsageFlags usageFlags,
+                                VkMemoryPropertyFlags memoryPropertyFlags,
+                                VkBuffer *buffer, VkDeviceMemory *memory,
+                                VkDeviceSize size, void *data = nullptr);
+  VkResult createDeviceImage(VkImage &image, const int width, const int height);
+  VkResult createSampler(VkImage &image, VkSampler &sampler, VkImageView &view);
+  VkResult copyBufferHostToDevice(VkBuffer &deviceBuffer, VkBuffer &hostBuffer,
+                                  const VkDeviceSize &bufferSize);
+
+  VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer,
+                                       const uint32_t width,
+                                       const uint32_t height);
+  VkResult copyDeviceImageToHostBuffer(VkImage &image, void *dst,
+                                       const VkDeviceSize &bufferSize,
+                                       const uint32_t width,
+                                       const uint32_t height);
+  VkResult copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, void *dst,
+                                        const VkDeviceSize &bufferSize,
+                                        const uint32_t width,
+                                        const uint32_t height);
+  VkResult prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
+                                VkBuffer &outputHostBuffer,
+                                VkDeviceMemory &outputHostMemory,
+                                const VkDeviceSize &bufferSize);
+  VkResult prepareImageToImageCommandBuffer();
+
+  VkResult prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
+                                         VkBuffer &filterDeviceBuffer,
+                                         VkBuffer &outputDeviceBuffer);
+  VkResult prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
+                                        VkBuffer &filterDeviceBuffer,
+                                        VkBuffer &outputDeviceBuffer);
+  VkResult prepareImageToImagePipeline();
+
+  VkResult createTextureTarget(uint32_t width, uint32_t height,
+                               VkFormat format);
+  VkResult prepareDebugLayer();
+  VkResult prepareDevice();
 
   VkInstance instance_;
   VkPhysicalDevice physicalDevice_;
@@ -89,7 +135,6 @@ public:
   VkQueue queue_;
   VkCommandPool commandPool_;
   VkCommandBuffer commandBuffer_;
-  // VkFence fence_;
   VkDescriptorPool descriptorPool_;
   VkDescriptorSetLayout descriptorSetLayout_;
   VkDescriptorSet descriptorSet_;
@@ -99,10 +144,13 @@ public:
   InitParams params_;
   VkBuffer deviceBuffer_, hostBuffer_;
   VkDeviceMemory deviceMemory_, hostMemory_;
-  VkFormat imageFormat_; // VK_FORMAT_R32_SFLOAT;
+  VkFormat imageFormat_;
+  // VK_FORMAT_R32_SFLOAT;
   // VK_FORMAT_R32G32B32A32_SFLOAT;
-  // VK_FORMAT_R32G32B32A32_SFLOAT; //
-  // VK_FORMAT_R8G8B8A8_UINT;//VK_FORMAT_R8G8B8_UINT;//VK_FORMAT_R8G8B8A8_UNORM;
+  // VK_FORMAT_R32G32B32A32_SFLOAT;
+  // VK_FORMAT_R8G8B8A8_UINT;
+  // VK_FORMAT_R8G8B8_UINT;
+  // VK_FORMAT_R8G8B8A8_UNORM;
 
   VkImage image_;
   VkImage filterImage_;
@@ -128,51 +176,6 @@ public:
   VkQueryPool queryPool_;
 
   VkDebugReportCallbackEXT debugReportCallback{};
-
-  VkResult createBufferWithData(VkBufferUsageFlags usageFlags,
-                                VkMemoryPropertyFlags memoryPropertyFlags,
-                                VkBuffer *buffer, VkDeviceMemory *memory,
-                                VkDeviceSize size, void *data = nullptr);
-  VkResult createDeviceImage(VkImage &image, const int width, const int height);
-  VkResult createSampler(VkImage &image, VkSampler &sampler, VkImageView &view);
-  VkResult copyBufferHostToDevice(VkBuffer &deviceBuffer, VkBuffer &hostBuffer,
-                                  const VkDeviceSize &bufferSize);
-
-  VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer,
-                                       const uint32_t width,
-                                       const uint32_t height);
-  VkResult copyDeviceImageToHostBuffer(VkImage &image, void *dst,
-                                       const VkDeviceSize &bufferSize,
-                                       const uint32_t width,
-                                       const uint32_t height);
-  VkResult copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer, void *dst,
-                                        const VkDeviceSize &bufferSize,
-                                        const uint32_t width,
-                                        const uint32_t height);
-  VkResult prepareComputeCommandBuffer(VkBuffer &outputDeviceBuffer,
-                                       VkBuffer &outputHostBuffer,
-                                       VkDeviceMemory &outputHostMemory,
-                                       const VkDeviceSize &bufferSize);
-  VkResult prepareComputeImageToImageCommandBuffer();
-
-  VkResult prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
-                                         VkBuffer &filterDeviceBuffer,
-                                         VkBuffer &outputDeviceBuffer);
-  VkResult prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
-                                        VkBuffer &filterDeviceBuffer,
-                                        VkBuffer &outputDeviceBuffer);
-  VkResult prepareImageToImagePipeline();
-
-  VkResult prepareTextureTarget(uint32_t width, uint32_t height,
-                                VkFormat format);
-  VkResult prepareDebugLayer();
-  VkResult prepareDevice();
-  void summary();
-  virtual void execute();
-  ComputeOp();
-  ComputeOp(const InitParams &init_params);
-
-  virtual ~ComputeOp();
 };
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)

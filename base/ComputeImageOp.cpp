@@ -65,14 +65,14 @@ void ComputeImageOp::execute() {
   }
 #endif
   {
-    prepareTextureTarget(params_.outputWidth, params_.outputHeight,
-                         imageFormat_);
+    createTextureTarget(params_.outputWidth, params_.outputHeight,
+                        imageFormat_);
   }
   // Prepare compute pipeline.
   prepareImageToImagePipeline();
 
   // Command buffer creation (for compute work submission).
-  prepareComputeImageToImageCommandBuffer();
+  prepareImageToImageCommandBuffer();
   printf("%s,%d; Output: \n", __FUNCTION__, __LINE__);
   copyDeviceImageToHostBuffer(outputImage_, params_.computeOutput.data(),
                               outputBufferSize, params_.outputWidth,

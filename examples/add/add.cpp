@@ -24,8 +24,8 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 int main() {
   // works: 4x8; 32x1.
-  const int width = 1024;
-  const int height = 1024;
+  const int width = 2048;
+  const int height = 2048;
   ComputeOp::InitParams params;
   params.inputWidth = width;
   params.inputHeight = height;
@@ -42,6 +42,7 @@ int main() {
   std::vector<DATA_TYPE> computeFilter(BUFFER_ELEMENTS);
   BUFFER_ELEMENTS = params.outputWidth * params.outputHeight;
   std::vector<DATA_TYPE> computeOutput(BUFFER_ELEMENTS);
+
   // Fill input data
   uint32_t n = 0;
   std::generate(computeInput.begin(), computeInput.end(),
@@ -58,6 +59,7 @@ int main() {
 
   ComputeOp *computeOp = new ComputeOp(params);
   computeOp->execute();
+  computeOp->summaryOfInput();
   // computeOp->summary();
   delete (computeOp);
   return 0;

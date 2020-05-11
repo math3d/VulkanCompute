@@ -15,9 +15,12 @@ ComputeCopyImageOp::ComputeCopyImageOp(const InitParams &init_params)
 
 void ComputeCopyImageOp::execute() {
   // Prepare storage buffers.
-  const VkDeviceSize bufferSize = (params_.inputWidth * params_.inputHeight) * sizeof(uint32_t);
-  const VkDeviceSize filterBufferSize = (params_.filterWidth * params_.filterHeight) * sizeof(uint32_t);
-  const VkDeviceSize outputBufferSize = (params_.outputWidth * params_.outputHeight) * sizeof(uint32_t);
+  const VkDeviceSize bufferSize =
+      (params_.inputWidth * params_.inputHeight) * sizeof(uint32_t);
+  const VkDeviceSize filterBufferSize =
+      (params_.filterWidth * params_.filterHeight) * sizeof(uint32_t);
+  const VkDeviceSize outputBufferSize =
+      (params_.outputWidth * params_.outputHeight) * sizeof(uint32_t);
 
   // Copy input data to VRAM using a staging buffer.
   {
@@ -38,7 +41,8 @@ void ComputeCopyImageOp::execute() {
                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &testBuffer,
                          &testMemory, bufferSize);
 
-    copyDeviceImageToHostBuffer(image_, params_.computeOutput.data(), bufferSize, params_.inputWidth,
+    copyDeviceImageToHostBuffer(image_, params_.computeOutput.data(),
+                                bufferSize, params_.inputWidth,
                                 params_.inputHeight);
   }
 

@@ -96,11 +96,10 @@ VkResult ComputeOp::createBufferWithData(
 }
 
 // Prepare a texture target that is used to store compute shader calculations
-// prepareTextureTarget
-// For Image2Image.
+// createTextureTarget. Used for Image2Image.
 
-VkResult ComputeOp::prepareTextureTarget(uint32_t width, uint32_t height,
-                                         VkFormat format) {
+VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height,
+                                        VkFormat format) {
   VkFormatProperties formatProperties;
 
   // Get device properties for the requested texture format
@@ -441,6 +440,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
                                                 const uint32_t width,
                                                 const uint32_t height) {
 
+  assert(dst);
   // Setup buffer copy regions for each mip level
   uint32_t offset = 0;
   VkFormat format = imageFormat_;
@@ -628,6 +628,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
                                                  const VkDeviceSize &bufferSize,
                                                  const uint32_t width,
                                                  const uint32_t height) {
+  assert(dst);
   VkBuffer hostBuffer;
   VkDeviceMemory hostMemory;
 #if 1
@@ -716,9 +717,10 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::prepareComputeCommandBuffer(
-    VkBuffer &outputDeviceBuffer, VkBuffer &outputHostBuffer,
-    VkDeviceMemory &outputHostMemory, const VkDeviceSize &bufferSize) {
+VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
+                                         VkBuffer &outputHostBuffer,
+                                         VkDeviceMemory &outputHostMemory,
+                                         const VkDeviceSize &bufferSize) {
   VkCommandBufferBeginInfo cmdBufInfo =
       vks::initializers::commandBufferBeginInfo();
 
@@ -837,7 +839,7 @@ VkResult ComputeOp::prepareComputeCommandBuffer(
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::prepareComputeImageToImageCommandBuffer() {
+VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   vkQueueWaitIdle(queue_);
   VkCommandBufferBeginInfo cmdBufInfo =
       vks::initializers::commandBufferBeginInfo();
@@ -1544,7 +1546,13 @@ VkResult ComputeOp::prepareImageToImagePipeline() {
 
 ComputeOp::ComputeOp() {}
 
-void ComputeOp::summary() {
+void ComputeOp::summaryOfInput() const{
+  LOG(" Input: width x height = %dx%d\n", params_.inputWidth, params_.inputHeight);
+  LOG(" Filter: width x height = %dx%d\n", params_.filterWidth, params_.filterHeight);
+  LOG(" Output: width x height = %dx%d\n", params_.outputWidth, params_.outputWidth);
+}
+
+void ComputeOp::summary() const {
   LOG("\nCompute input:\n");
   for (auto v : params_.computeInput) {
     if (DATA_TYPE_ID == 0)
@@ -1649,9 +1657,10 @@ void ComputeOp::execute() {
                                 outputDeviceBuffer_);
 
   // Command buffer creation (for compute work submission).
-  prepareComputeCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
-                              outputHostMemory_, outputBufferSize);
-  copyDeviceBufferToHostBuffer(outputDeviceBuffer_,params_.computeOutput.data(), outputBufferSize,
+  prepareCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
+                       outputHostMemory_, outputBufferSize);
+  copyDeviceBufferToHostBuffer(outputDeviceBuffer_,
+                               params_.computeOutput.data(), outputBufferSize,
                                params_.outputWidth, params_.outputHeight);
 
   vkQueueWaitIdle(queue_);
