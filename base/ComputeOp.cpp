@@ -78,7 +78,11 @@ VkResult ComputeOp::createBufferWithData(
   if (data != nullptr) {
     void *mapped;
     VK_CHECK_RESULT(vkMapMemory(device_, *memory, 0, size, 0, &mapped));
+#ifdef USE_TIME
+    TIMEWITHSIZE("memcpy CPU to HOST memory", memcpy(mapped, data, size), size);
+#else
     memcpy(mapped, data, size);
+#endif
     if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
       // Flush writes to host visible buffer
       VkMappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
@@ -550,7 +554,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
 #ifdef USE_TIME
-  TIMEWITHSIZE("memcpy", memcpy(dst, data, bufferSize), bufferSize);
+  TIMEWITHSIZE("memcpy HOST image to CPU", memcpy(dst, data, bufferSize), bufferSize);
 #else
   memcpy(dst, data, bufferSize);
 #endif
@@ -699,7 +703,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
 
   // Copy to output.
 #ifdef USE_TIME
-  TIMEWITHSIZE("memcpy", memcpy(dst, mapped, bufferSize), bufferSize);
+  TIMEWITHSIZE("memcpy HOST memory to CPU", memcpy(dst, mapped, bufferSize), bufferSize);
 #else
   memcpy(dst, mapped, bufferSize);
 #endif
