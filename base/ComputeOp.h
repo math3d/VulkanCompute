@@ -80,6 +80,7 @@ public:
   void summaryOfInput() const;
   void summary() const;
   virtual void execute();
+  void executeWithTime();
   ComputeOp();
   ComputeOp(const InitParams &init_params);
 

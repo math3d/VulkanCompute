@@ -58,8 +58,8 @@ int main() {
   params.shader_path = "shaders/add/add_float.comp.spv";
 
   ComputeOp *computeOp = new ComputeOp(params);
-  computeOp->execute();
   computeOp->summaryOfInput();
+  computeOp->executeWithTime();
   // computeOp->summary();
   delete (computeOp);
   return 0;

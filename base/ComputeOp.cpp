@@ -22,7 +22,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <vector>
+
 
 #include "ComputeOp.h"
 #include "VulkanTools.h"
@@ -54,7 +56,6 @@ VkResult ComputeOp::createBufferWithData(
   VK_CHECK_RESULT(vkCreateBuffer(device_, &bufferCreateInfo, nullptr, buffer));
 
   // Create the memory backing up the buffer handle
-  printf("%s,%d; size = %d\n", __func__, __LINE__, size);
   VkMemoryRequirements memReqs;
   VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
   vkGetBufferMemoryRequirements(device_, *buffer, &memReqs);
@@ -237,7 +238,6 @@ VkResult ComputeOp::createDeviceImage(VkImage &image, const int width,
   // Set initial layout of the image to undefined
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageCreateInfo.extent = {(uint32_t)width, (uint32_t)height, 1};
-  printf("%s,%d\; w=%d, h=%d\n", __func__, __LINE__, width, height);
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
@@ -546,14 +546,12 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
 
   // Map image memory so we can start copying from it
-  printf("\n%s,%d, Read from memory:  bufferSize=%d \n", __func__, __LINE__,
-         bufferSize);
   const char *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
   //  memcpy(params_.computeOutput.data(), data, bufferSize);
   memcpy(dst, data, bufferSize);
-#if 0
+#if USE_READBACK_INPUT
   // Fix msvc: expression did not evaluate to a constant
 
   DATA_TYPE *tmpout = new DATA_TYPE[width * height];
@@ -1019,6 +1017,7 @@ VkResult ComputeOp::prepareDevice() {
 
   // VkPhysicalDeviceProperties deviceProperties;
   vkGetPhysicalDeviceProperties(physicalDevice_, &deviceProperties_);
+  LOG("***********: GPU INFO:\n");
   LOG("GPU: %s\n", deviceProperties_.deviceName);
 
   LOG("GPU: maxComputeWorkGroupCount = %d, %d, %d\n",
@@ -1031,7 +1030,6 @@ VkResult ComputeOp::prepareDevice() {
       deviceProperties_.limits.maxComputeWorkGroupSize[2]);
   LOG("GPU: maxComputeSharedMemorySize = %d\n",
       deviceProperties_.limits.maxComputeSharedMemorySize);
-
   vkGetPhysicalDeviceMemoryProperties(physicalDevice_,
                                       &deviceMemoryProperties_);
 
@@ -1546,10 +1544,15 @@ VkResult ComputeOp::prepareImageToImagePipeline() {
 
 ComputeOp::ComputeOp() {}
 
-void ComputeOp::summaryOfInput() const{
-  LOG(" Input: width x height = %dx%d\n", params_.inputWidth, params_.inputHeight);
-  LOG(" Filter: width x height = %dx%d\n", params_.filterWidth, params_.filterHeight);
-  LOG(" Output: width x height = %dx%d\n", params_.outputWidth, params_.outputWidth);
+void ComputeOp::summaryOfInput() const {
+  LOG("***********: INPUT INFO:\n");
+  LOG(" Input: width x height = %dx%d\n", params_.inputWidth,
+      params_.inputHeight);
+  LOG(" Filter: width x height = %dx%d\n", params_.filterWidth,
+      params_.filterHeight);
+  LOG(" Output: width x height = %dx%d\n", params_.outputWidth,
+      params_.outputWidth);
+  LOG("***********\n");
 }
 
 void ComputeOp::summary() const {
@@ -1588,6 +1591,14 @@ ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params) {
   prepareDevice();
 }
 
+void ComputeOp::executeWithTime() {
+  clock_t begin = clock();
+  execute();
+  clock_t end = clock();
+  double time_spent = (double)(end - begin) / (CLOCKS_PER_SEC/1000.0);
+  printf("Time for execute: %fms\n", time_spent);
+}
+
 void ComputeOp::execute() {
   // Prepare storage buffers.
   const VkDeviceSize bufferSize =
@@ -1611,9 +1622,12 @@ void ComputeOp::execute() {
                          &deviceMemory_, bufferSize);
 
     copyBufferHostToDevice(deviceBuffer_, hostBuffer_, bufferSize);
+#if USE_READBACK_INPUT
+    // Debug only.
     copyDeviceBufferToHostBuffer(deviceBuffer_, params_.computeInput.data(),
                                  bufferSize, params_.inputWidth,
                                  params_.inputHeight);
+#endif
   }
 
   // Copy filter data to VRAM using a staging buffer.
@@ -1632,10 +1646,12 @@ void ComputeOp::execute() {
     // Copy to staging buffer.
     copyBufferHostToDevice(filterDeviceBuffer_, filterHostBuffer_,
                            filterBufferSize);
+#if USE_READBACK_INPUT
     // Debug only.
     copyDeviceBufferToHostBuffer(filterDeviceBuffer_,
                                  params_.computeFilter.data(), filterBufferSize,
                                  params_.filterWidth, params_.filterHeight);
+#endif
   }
 
   {

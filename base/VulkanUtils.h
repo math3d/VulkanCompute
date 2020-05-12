@@ -4,6 +4,7 @@
  * This code is licensed under the MIT license (MIT)
  * (http://opensource.org/licenses/MIT)
  */
+#ifndef VULKAN_UTILS_H_
 #define VULKAN_UTILS_H_
 
 #if defined(_WIN32)
@@ -174,5 +175,6 @@ void timeOfDispatch(const VkDevice device, const VkQueryPool &queryPool)
   vkGetQueryPoolResults(device, queryPool, 0, 1, sizeof(uint32_t), &begin, 0, VK_QUERY_RESULT_WAIT_BIT);
   uint32_t diff = end - begin;
   totalTime += (diff) / (float)1e6;
-  LOG("total time=%fms\n", totalTime);
+  LOG("Time for dispatch = %fms\n", totalTime);
 }
+#endif
