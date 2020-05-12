@@ -15,7 +15,7 @@
 #include <string.h>
 #include <vector>
 
-#include "ComputeOp.h"
+#include "ComputeBufferOp.h"
 
 #define DEBUG (!NDEBUG)
 
@@ -57,7 +57,7 @@ int main() {
 
   params.shader_path = "shaders/add/add_float.comp.spv";
 
-  ComputeOp *computeOp = new ComputeOp(params);
+  ComputeOp *computeOp = new ComputeBufferOp(params);
   computeOp->summaryOfInput();
   computeOp->executeWithTime();
   // computeOp->summary();

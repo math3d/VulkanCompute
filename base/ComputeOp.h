@@ -79,7 +79,7 @@ public:
   };
   void summaryOfInput() const;
   void summary() const;
-  virtual void execute();
+  virtual void execute() = 0;
   void executeWithTime();
   ComputeOp();
   ComputeOp(const InitParams &init_params);
@@ -93,7 +93,7 @@ protected:
                                 VkDeviceSize size, void *data = nullptr);
   VkResult createDeviceImage(VkImage &image, const int width, const int height);
   VkResult createSampler(VkImage &image, VkSampler &sampler, VkImageView &view);
-  VkResult copyBufferHostToDevice(VkBuffer &deviceBuffer, VkBuffer &hostBuffer,
+  VkResult copyHostBufferToDeviceBuffer(VkBuffer &deviceBuffer, VkBuffer &hostBuffer,
                                   const VkDeviceSize &bufferSize);
 
   VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer,

@@ -15,7 +15,7 @@
 #include <string.h>
 #include <vector>
 
-#include "ComputeOp.h"
+#include "ComputeBufferOp.h"
 
 #define DEBUG (!NDEBUG)
 
@@ -63,7 +63,7 @@ int main() {
 
   params.shader_path = "shaders/conv2d_buffer.comp.spv";
 
-  ComputeOp *computeOp = new ComputeOp(params);
+  ComputeOp *computeOp = new ComputeBufferOp(params);
   computeOp->execute();
   computeOp->summary();
   delete (computeOp);

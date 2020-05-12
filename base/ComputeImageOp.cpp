@@ -36,11 +36,11 @@ void ComputeImageOp::execute() {
 
     copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
                                 params_.inputHeight);
+#if USE_READBACK_INPUT
     // Debug only.
-    #if USE_READBACK_INPUT
     copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize,
                                 params_.inputWidth, params_.inputHeight);
-    #endif
+#endif
   }
   // Copy filter data to VRAM using a staging buffer.
   {
@@ -55,12 +55,12 @@ void ComputeImageOp::execute() {
     // Copy to staging buffer
     copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
                                 params_.filterWidth, params_.filterHeight);
+#if USE_READBACK_INPUT
     // Debug only.
-  #if USE_READBACK_INPUT
     copyDeviceImageToHostBuffer(filterImage_, params_.computeFilter.data(),
                                 filterBufferSize, params_.filterWidth,
                                 params_.filterHeight);
-  #endif
+#endif
   }
   {
     createTextureTarget(params_.outputWidth, params_.outputHeight,
