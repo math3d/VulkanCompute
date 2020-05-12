@@ -74,6 +74,5 @@ void ComputeImageOp::execute() {
   copyDeviceImageToHostBuffer(outputImage_, params_.computeOutput.data(),
                               outputBufferSize, params_.outputWidth,
                               params_.outputHeight);
-
   vkQueueWaitIdle(queue_);
 }

@@ -6,7 +6,7 @@
 
 Vulkan源码的获得：
 ```
-git clone https://github.com/math3d/Vulkan.git
+git clone https://github.com/math3d/VulkanCompute.git
 git submodule init
 git submodule update
 ```

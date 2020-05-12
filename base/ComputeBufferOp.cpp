@@ -94,6 +94,5 @@ void ComputeBufferOp::execute() {
   copyDeviceBufferToHostBuffer(outputDeviceBuffer_,
                                params_.computeOutput.data(), outputBufferSize,
                                params_.outputWidth, params_.outputHeight);
-
   vkQueueWaitIdle(queue_);
 }

@@ -39,22 +39,19 @@ android_app *androidapp;
 const int BUFFER_NUMBER = 3;
 #define USE_INPUT 1
 
-inline VkImageCreateInfo initImageCreateInfo()
-{
+inline VkImageCreateInfo initImageCreateInfo() {
   VkImageCreateInfo imageCreateInfo{};
   imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   return imageCreateInfo;
 }
 
-inline VkMemoryAllocateInfo memoryAllocateInfo()
-{
+inline VkMemoryAllocateInfo memoryAllocateInfo() {
   VkMemoryAllocateInfo memAllocInfo{};
   memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   return memAllocInfo;
 }
 
-inline VkSamplerCreateInfo samplerCreateInfo()
-{
+inline VkSamplerCreateInfo samplerCreateInfo() {
   VkSamplerCreateInfo samplerCreateInfo{};
   samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   samplerCreateInfo.maxAnisotropy = 1.0f;
@@ -63,10 +60,8 @@ inline VkSamplerCreateInfo samplerCreateInfo()
 
 void flushCommandBuffer(VkDevice device, VkCommandPool commandPool,
                         VkCommandBuffer commandBuffer, VkQueue queue,
-                        bool free)
-{
-  if (commandBuffer == VK_NULL_HANDLE)
-  {
+                        bool free) {
+  if (commandBuffer == VK_NULL_HANDLE) {
     return;
   }
 
@@ -88,15 +83,13 @@ void flushCommandBuffer(VkDevice device, VkCommandPool commandPool,
 
   VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
-  if (free)
-  {
+  if (free) {
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
   }
 }
 
 VkCommandBuffer createCommandBuffer(VkDevice device, VkCommandPool commandPool,
-                                    VkCommandBufferLevel level, bool begin)
-{
+                                    VkCommandBufferLevel level, bool begin) {
   VkCommandBuffer cmdBuffer;
 
   VkCommandBufferAllocateInfo cmdBufAllocateInfo =
@@ -106,8 +99,7 @@ VkCommandBuffer createCommandBuffer(VkDevice device, VkCommandPool commandPool,
       vkAllocateCommandBuffers(device, &cmdBufAllocateInfo, &cmdBuffer));
 
   // If requested, also start the new command buffer
-  if (begin)
-  {
+  if (begin) {
     VkCommandBufferBeginInfo cmdBufInfo =
         vks::initializers::commandBufferBeginInfo();
     VK_CHECK_RESULT(vkBeginCommandBuffer(cmdBuffer, &cmdBufInfo));
@@ -131,20 +123,15 @@ VkCommandBuffer createCommandBuffer(VkDevice device, VkCommandPool commandPool,
  * be found that supports the requested properties
  */
 
-uint32_t getMemoryType(const VkPhysicalDeviceMemoryProperties &deviceMemoryProperties,
-                       uint32_t typeBits,
-                       VkMemoryPropertyFlags properties,
-                       VkBool32 *memTypeFound = nullptr)
-{
-  for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++)
-  {
-    if ((typeBits & 1) == 1)
-    {
+uint32_t
+getMemoryType(const VkPhysicalDeviceMemoryProperties &deviceMemoryProperties,
+              uint32_t typeBits, VkMemoryPropertyFlags properties,
+              VkBool32 *memTypeFound = nullptr) {
+  for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++) {
+    if ((typeBits & 1) == 1) {
       if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & properties) ==
-          properties)
-      {
-        if (memTypeFound)
-        {
+          properties) {
+        if (memTypeFound) {
           *memTypeFound = true;
         }
         return i;
@@ -153,28 +140,41 @@ uint32_t getMemoryType(const VkPhysicalDeviceMemoryProperties &deviceMemoryPrope
     typeBits >>= 1;
   }
 
-  if (memTypeFound)
-  {
+  if (memTypeFound) {
     *memTypeFound = false;
     return 0;
-  }
-  else
-  {
+  } else {
     throw std::runtime_error("Could not find a matching memory type");
   }
 }
 
-void timeOfDispatch(const VkDevice device, const VkQueryPool &queryPool)
-{
+void timeOfDispatch(const VkDevice device, const VkQueryPool &queryPool) {
   uint32_t end = 0;
   uint32_t begin = 0;
 
   static float totalTime = 0.0f;
 
-  vkGetQueryPoolResults(device, queryPool, 1, 1, sizeof(uint32_t), &end, 0, VK_QUERY_RESULT_WAIT_BIT);
-  vkGetQueryPoolResults(device, queryPool, 0, 1, sizeof(uint32_t), &begin, 0, VK_QUERY_RESULT_WAIT_BIT);
+  vkGetQueryPoolResults(device, queryPool, 1, 1, sizeof(uint32_t), &end, 0,
+                        VK_QUERY_RESULT_WAIT_BIT);
+  vkGetQueryPoolResults(device, queryPool, 0, 1, sizeof(uint32_t), &begin, 0,
+                        VK_QUERY_RESULT_WAIT_BIT);
   uint32_t diff = end - begin;
   totalTime += (diff) / (float)1e6;
   LOG("Time for dispatch = %fms\n", totalTime);
 }
+
+#define TIME(funcname, func)                                                   \
+  clock_t begin = clock();                                                     \
+  func;                                                                        \
+  clock_t end = clock();                                                       \
+  double time_spent = (double)(end - begin) / (CLOCKS_PER_SEC / 1000);         \
+  printf("Time for %s = %fms\n", funcname, time_spent);
+
+#define TIMEWITHSIZE(funcname, func, size)                                                   \
+  clock_t begin = clock();                                                     \
+  func;                                                                        \
+  clock_t end = clock();                                                       \
+  double time_spent = (double)(end - begin) / (CLOCKS_PER_SEC / 1000);         \
+  printf("Time for %s %d = %fms\n", funcname, size, time_spent);
+
 #endif

@@ -25,7 +25,6 @@
 #include <time.h>
 #include <vector>
 
-
 #include "ComputeOp.h"
 #include "VulkanTools.h"
 #include "VulkanUtils.h"
@@ -38,9 +37,10 @@ android_app *androidapp;
 #define DEBUG (!NDEBUG)
 
 // const int BUFFER_NUMBER = 3;
-#define USE_INPUT 1
-#define USE_FILTER 1
+#define USE_INPUT
+#define USE_FILTER
 #define USE_TIMESTAMP
+#define USE_TIME
 
 ComputeOp::InitParams::InitParams() = default;
 
@@ -86,7 +86,6 @@ VkResult ComputeOp::createBufferWithData(
       mappedRange.offset = 0;
       mappedRange.size = VK_WHOLE_SIZE;
       vkFlushMappedMemoryRanges(device_, 1, &mappedRange);
-      // vkUnmapMemory(device_, *memory);
     }
     vkUnmapMemory(device_, *memory);
   }
@@ -187,9 +186,10 @@ VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height,
   return VK_SUCCESS;
 }
 
-VkResult ComputeOp::copyHostBufferToDeviceBuffer(VkBuffer &deviceBuffer,
-                                           VkBuffer &hostBuffer,
-                                           const VkDeviceSize &bufferSize) {
+VkResult
+ComputeOp::copyHostBufferToDeviceBuffer(VkBuffer &deviceBuffer,
+                                        VkBuffer &hostBuffer,
+                                        const VkDeviceSize &bufferSize) {
   // Copy to staging buffer.
   VkCommandBufferAllocateInfo cmdBufAllocateInfo =
       vks::initializers::commandBufferAllocateInfo(
@@ -546,11 +546,14 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
 
   // Map image memory so we can start copying from it
-  const char *data;
+  const void *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
-  //  memcpy(params_.computeOutput.data(), data, bufferSize);
+#ifdef USE_TIME
+  TIMEWITHSIZE("memcpy", memcpy(dst, data, bufferSize), bufferSize);
+#else
   memcpy(dst, data, bufferSize);
+#endif
 #if USE_READBACK_INPUT
   // Fix msvc: expression did not evaluate to a constant
 
@@ -629,7 +632,7 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
   assert(dst);
   VkBuffer hostBuffer;
   VkDeviceMemory hostMemory;
-#if 1
+  // TODO: check if vkQueueWaitIdle is required.
   vkQueueWaitIdle(queue_);
   createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
@@ -695,6 +698,9 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
   vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
 
   // Copy to output.
+#ifdef USE_TIME
+  TIMEWITHSIZE("memcpy", memcpy(dst, mapped, bufferSize), bufferSize);
+#else
   memcpy(dst, mapped, bufferSize);
 #endif
 
@@ -1591,13 +1597,7 @@ ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params) {
   prepareDevice();
 }
 
-void ComputeOp::executeWithTime() {
-  clock_t begin = clock();
-  execute();
-  clock_t end = clock();
-  double time_spent = (double)(end - begin) / (CLOCKS_PER_SEC/1000.0);
-  printf("Time for execute: %fms\n", time_spent);
-}
+void ComputeOp::executeWithTime() { TIME("execute", execute()); }
 
 ComputeOp::~ComputeOp() {
   // Clean up.
