@@ -5,6 +5,9 @@
  * (http://opensource.org/licenses/MIT)
  */
 #include "ComputeBufferOp.h"
+#include "Utils.h"
+#include <time.h>
+
 #define USE_INPUT 1
 #define USE_FILTER 1
 
@@ -26,18 +29,22 @@ void ComputeBufferOp::execute() {
 
   // Copy input data to VRAM using a staging buffer.
   {
-    createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-                             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer_,
-                         &hostMemory_, bufferSize, params_.computeInput.data());
+    TIME("execute:createBufferWithData",
+         createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer_,
+                              &hostMemory_, bufferSize,
+                              params_.computeInput.data()));
 
-    createBufferWithData(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-                             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &deviceBuffer_,
-                         &deviceMemory_, bufferSize);
+    TIME("execute:createBufferWithData",
+         createBufferWithData(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                              &deviceBuffer_, &deviceMemory_, bufferSize));
 
-    copyHostBufferToDeviceBuffer(deviceBuffer_, hostBuffer_, bufferSize);
+    TIME("execute:copyHostBufferToDeviceBuffer",
+         copyHostBufferToDeviceBuffer(deviceBuffer_, hostBuffer_, bufferSize));
 #if USE_READBACK_INPUT
     // Debug only.
     copyDeviceBufferToHostBuffer(deviceBuffer_, params_.computeInput.data(),
@@ -48,20 +55,25 @@ void ComputeBufferOp::execute() {
 
   // Copy filter data to VRAM using a staging buffer.
   {
-    createBufferWithData(
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &filterHostBuffer_,
-        &filterHostMemory_, filterBufferSize, params_.computeFilter.data());
+    TIME("execute:createBufferWithData",
+         createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                              &filterHostBuffer_, &filterHostMemory_,
+                              filterBufferSize, params_.computeFilter.data()));
 
-    createBufferWithData(
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &filterDeviceBuffer_,
-        &filterDeviceMemory_, filterBufferSize);
+    TIME("execute:createBufferWithData",
+         createBufferWithData(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                              &filterDeviceBuffer_, &filterDeviceMemory_,
+                              filterBufferSize));
 
     // Copy to staging buffer.
-    copyHostBufferToDeviceBuffer(filterDeviceBuffer_, filterHostBuffer_,
-                           filterBufferSize);
+    TIME("execute:copyHostBufferToDeviceBuffer",
+         copyHostBufferToDeviceBuffer(filterDeviceBuffer_, filterHostBuffer_,
+                                      filterBufferSize));
 #if USE_READBACK_INPUT
     // Debug only.
     copyDeviceBufferToHostBuffer(filterDeviceBuffer_,
@@ -72,27 +84,34 @@ void ComputeBufferOp::execute() {
 
   {
 
-    createBufferWithData(
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &outputHostBuffer_,
-        &outputHostMemory_, outputBufferSize);
+    TIME("execute:createBufferWithData",
+         createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                              &outputHostBuffer_, &outputHostMemory_,
+                              outputBufferSize));
 
-    createBufferWithData(
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &outputDeviceBuffer_,
-        &outputDeviceMemory_, outputBufferSize);
+    TIME("execute:createBufferWithData",
+         createBufferWithData(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                              &outputDeviceBuffer_, &outputDeviceMemory_,
+                              outputBufferSize));
   }
 
   // Prepare compute pipeline.
-  prepareBufferToBufferPipeline(deviceBuffer_, filterDeviceBuffer_,
-                                outputDeviceBuffer_);
+  TIME("execute:prepareBufferToBufferPipeline",
+       prepareBufferToBufferPipeline(deviceBuffer_, filterDeviceBuffer_,
+                                     outputDeviceBuffer_));
 
   // Command buffer creation (for compute work submission).
-  prepareCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
-                       outputHostMemory_, outputBufferSize);
-  copyDeviceBufferToHostBuffer(outputDeviceBuffer_,
-                               params_.computeOutput.data(), outputBufferSize,
-                               params_.outputWidth, params_.outputHeight);
+  TIME("execute:prepareCommandBuffer",
+       prepareCommandBuffer(outputDeviceBuffer_, outputHostBuffer_,
+                            outputHostMemory_, outputBufferSize));
+  TIME("execute:copyDeviceBufferToHostBuffer",
+       copyDeviceBufferToHostBuffer(
+           outputDeviceBuffer_, params_.computeOutput.data(), outputBufferSize,
+           params_.outputWidth, params_.outputHeight));
   vkQueueWaitIdle(queue_);
 }

@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "ComputeOp.h"
+#include "Utils.h"
 #include "VulkanTools.h"
 #include "VulkanUtils.h"
 #include <vulkan/vulkan.h>
@@ -79,7 +80,8 @@ VkResult ComputeOp::createBufferWithData(
     void *mapped;
     VK_CHECK_RESULT(vkMapMemory(device_, *memory, 0, size, 0, &mapped));
 #ifdef USE_TIME
-    TIMEWITHSIZE("memcpy CPU to HOST memory", memcpy(mapped, data, size), size);
+    TIMEWITHSIZE("    createBufferWithData:memcpy CPU to HOST memory",
+                 memcpy(mapped, data, size), size);
 #else
     memcpy(mapped, data, size);
 #endif
@@ -554,7 +556,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
 #ifdef USE_TIME
-  TIMEWITHSIZE("memcpy HOST image to CPU", memcpy(dst, data, bufferSize), bufferSize);
+  TIMEWITHSIZE("    copyDeviceImageToHostBuffer:memcpy HOST image to CPU",
+               memcpy(dst, data, bufferSize), bufferSize);
 #else
   memcpy(dst, data, bufferSize);
 #endif
@@ -703,7 +706,8 @@ VkResult ComputeOp::copyDeviceBufferToHostBuffer(VkBuffer &deviceBuffer,
 
   // Copy to output.
 #ifdef USE_TIME
-  TIMEWITHSIZE("memcpy HOST memory to CPU", memcpy(dst, mapped, bufferSize), bufferSize);
+  TIMEWITHSIZE("    copyDeviceBufferToHostBuffer:memcpy HOST memory to CPU",
+               memcpy(dst, mapped, bufferSize), bufferSize);
 #else
   memcpy(dst, mapped, bufferSize);
 #endif

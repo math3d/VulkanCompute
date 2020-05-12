@@ -4,7 +4,16 @@
  * This code is licensed under the MIT license (MIT)
  * (http://opensource.org/licenses/MIT)
  */
+#define USE_TIME
 #include "ComputeImageOp.h"
+#include <time.h>
+
+#ifdef USE_TIME
+#include "Utils.h"
+#else
+#define TIME
+#endif
+
 #define USE_INPUT 1
 #define USE_FILTER 1
 
@@ -26,16 +35,20 @@ void ComputeImageOp::execute() {
 
   // Copy input data to VRAM using a staging buffer.
   {
-    createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-                             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer_,
-                         &hostMemory_, bufferSize, params_.computeInput.data());
+    TIME("execute:createBufferWithData",
+         createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer_,
+                              &hostMemory_, bufferSize,
+                              params_.computeInput.data()));
 
-    createDeviceImage(image_, params_.inputWidth, params_.inputHeight);
-    createSampler(image_, sampler_, view_);
+    TIME("execute:createDeviceImage",
+         createDeviceImage(image_, params_.inputWidth, params_.inputHeight));
+    TIME("execute:createSampler", createSampler(image_, sampler_, view_));
 
-    copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
-                                params_.inputHeight);
+    TIME("execute:copyHostBufferToDeviceImage",
+         copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
+                                     params_.inputHeight));
 #if USE_READBACK_INPUT
     // Debug only.
     copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize,
@@ -44,17 +57,24 @@ void ComputeImageOp::execute() {
   }
   // Copy filter data to VRAM using a staging buffer.
   {
-    createBufferWithData(
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &filterHostBuffer_,
-        &filterHostMemory_, filterBufferSize, params_.computeFilter.data());
+    TIME("execute:createBufferWithData",
+         createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                              &filterHostBuffer_, &filterHostMemory_,
+                              filterBufferSize, params_.computeFilter.data()));
 
-    createDeviceImage(filterImage_, params_.filterWidth, params_.filterHeight);
-    createSampler(filterImage_, filterSampler_, filterView_);
+    TIME("execute:createDeviceImage",
+         createDeviceImage(filterImage_, params_.filterWidth,
+                           params_.filterHeight));
+    TIME("execute:createSampler",
+         createSampler(filterImage_, filterSampler_, filterView_));
 
     // Copy to staging buffer
-    copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
-                                params_.filterWidth, params_.filterHeight);
+    TIME("execute:copyHostBufferToDeviceImage",
+         copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
+                                     params_.filterWidth,
+                                     params_.filterHeight));
 #if USE_READBACK_INPUT
     // Debug only.
     copyDeviceImageToHostBuffer(filterImage_, params_.computeFilter.data(),
@@ -63,16 +83,19 @@ void ComputeImageOp::execute() {
 #endif
   }
   {
-    createTextureTarget(params_.outputWidth, params_.outputHeight,
-                        imageFormat_);
+    TIME("execute:createTextureTarget",
+         createTextureTarget(params_.outputWidth, params_.outputHeight,
+                             imageFormat_));
   }
   // Prepare compute pipeline.
-  prepareImageToImagePipeline();
+  TIME("execute:prepareImageToImagePipeline", prepareImageToImagePipeline());
 
   // Command buffer creation (for compute work submission).
-  prepareImageToImageCommandBuffer();
-  copyDeviceImageToHostBuffer(outputImage_, params_.computeOutput.data(),
-                              outputBufferSize, params_.outputWidth,
-                              params_.outputHeight);
+  TIME("execute:prepareImageToImageCommandBuffer",
+       prepareImageToImageCommandBuffer());
+  TIME("execute:copyDeviceImageToHostBuffer",
+       copyDeviceImageToHostBuffer(outputImage_, params_.computeOutput.data(),
+                                   outputBufferSize, params_.outputWidth,
+                                   params_.outputHeight));
   vkQueueWaitIdle(queue_);
 }
