@@ -42,6 +42,7 @@ set(EXAMPLES
     add
     add_image
     add_imager32f
+    copy_image
     conv2d_buffer
     conv2d_image
 )
