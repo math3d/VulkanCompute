@@ -88,7 +88,7 @@ static VkSpecializationInfo createSpecializationData(ComputeOp::InitParams param
                                                 sizeof(uint32_t)),
                                                 };
   VkSpecializationInfo specializationInfo =
-      vks::initializers::specializationInfo(6, specializationMapEntry,
+      vks::initializers::specializationInfo(9, specializationMapEntry,
                                             sizeof(SpecializationData),
                                             &specializationData);
   return specializationInfo;
