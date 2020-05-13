@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
+#include <math.h>
 
 #include "ComputeBufferOp.h"
 #define USE_TIME
@@ -34,6 +35,10 @@ int main() {
   // works: 4x8; 32x1.
   const int width = 2048;
   const int height = 2048;
+  const int WORKGROUPSIZE_X = 1;
+  const int WORKGROUPSIZE_Y = 1;
+  const int WORKGROUPSIZE_Z = 1;
+
   ComputeOp::InitParams params;
   params.inputWidth = width;
   params.inputHeight = height;
@@ -41,9 +46,12 @@ int main() {
   params.filterHeight = height;
   params.outputWidth = width;
   params.outputHeight = height;
-  params.DISPATCH_X = width;
-  params.DISPATCH_Y = height;
+  params.DISPATCH_X = ceil((float)width/WORKGROUPSIZE_X);
+  params.DISPATCH_Y = ceil((float)height/WORKGROUPSIZE_Y);
   params.DISPATCH_Z = 1;
+  params.WORKGROUPSIZE_X = WORKGROUPSIZE_X;
+  params.WORKGROUPSIZE_Y = WORKGROUPSIZE_Y;
+  params.WORKGROUPSIZE_Z = WORKGROUPSIZE_Z;
   int BUFFER_ELEMENTS = params.inputWidth * params.inputHeight;
   std::vector<DATA_TYPE> computeInput(BUFFER_ELEMENTS);
   BUFFER_ELEMENTS = params.filterWidth * params.filterHeight;

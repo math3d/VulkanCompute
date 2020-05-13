@@ -71,6 +71,9 @@ public:
     int filterHeight = 1;
     int outputWidth = 32;
     int outputHeight = 1;
+    int WORKGROUPSIZE_X = 1;
+    int WORKGROUPSIZE_Y = 1;
+    int WORKGROUPSIZE_Z = 1;
     int DISPATCH_X = 32;
     int DISPATCH_Y = 1;
     int DISPATCH_Z = 1;

@@ -43,6 +43,58 @@ android_app *androidapp;
 #define USE_TIMESTAMP
 #define USE_TIME
 
+struct SpecializationData {
+  uint32_t workgroupSizeX;
+  uint32_t workgroupSizeY;
+  uint32_t workgroupSizeZ;
+  uint32_t inputWidth;
+  uint32_t inputHeight;
+  uint32_t filterWidth;
+  uint32_t filterHeight;
+  uint32_t outputWidth;
+  uint32_t outputHeight;
+};
+
+static VkSpecializationInfo createSpecializationData(ComputeOp::InitParams params) {
+  // Pass SSBO size via specialization constant
+  SpecializationData specializationData;
+  specializationData.workgroupSizeX = params.WORKGROUPSIZE_X;
+  specializationData.workgroupSizeY = params.WORKGROUPSIZE_Y;
+  specializationData.workgroupSizeZ = params.WORKGROUPSIZE_Z;
+  specializationData.inputWidth = params.inputWidth;
+  specializationData.inputHeight = params.inputHeight;
+  specializationData.filterWidth = params.filterWidth;
+  specializationData.filterHeight = params.filterHeight;
+  specializationData.outputWidth = params.outputWidth;
+  specializationData.outputHeight = params.outputHeight;
+  VkSpecializationMapEntry specializationMapEntry[] = {
+      vks::initializers::specializationMapEntry(0, 0 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+      vks::initializers::specializationMapEntry(1, 1 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+      vks::initializers::specializationMapEntry(2, 2 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+      vks::initializers::specializationMapEntry(3, 3 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+      vks::initializers::specializationMapEntry(4, 4 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+      vks::initializers::specializationMapEntry(5, 5 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+      vks::initializers::specializationMapEntry(6, 6 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+      vks::initializers::specializationMapEntry(7, 7 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+      vks::initializers::specializationMapEntry(8, 8 * sizeof(uint32_t),
+                                                sizeof(uint32_t)),
+                                                };
+  VkSpecializationInfo specializationInfo =
+      vks::initializers::specializationInfo(6, specializationMapEntry,
+                                            sizeof(SpecializationData),
+                                            &specializationData);
+  return specializationInfo;
+}
+
+
 ComputeOp::InitParams::InitParams() = default;
 
 ComputeOp::InitParams::InitParams(const InitParams &other) = default;
@@ -1173,40 +1225,7 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
   VkComputePipelineCreateInfo computePipelineCreateInfo =
       vks::initializers::computePipelineCreateInfo(pipelineLayout_, 0);
 
-#if 1
-  // Pass SSBO size via specialization constant
-  struct SpecializationData {
-    uint32_t inputWidth;
-    uint32_t inputHeight;
-    uint32_t filterWidth;
-    uint32_t filterHeight;
-    uint32_t outputWidth;
-    uint32_t outputHeight;
-  } specializationData;
-  specializationData.inputWidth = params_.inputWidth;
-  specializationData.inputHeight = params_.inputHeight;
-  specializationData.filterWidth = params_.filterWidth;
-  specializationData.filterHeight = params_.filterHeight;
-  specializationData.outputWidth = params_.outputWidth;
-  specializationData.outputHeight = params_.outputHeight;
-  VkSpecializationMapEntry specializationMapEntry[] = {
-      vks::initializers::specializationMapEntry(0, 0 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(1, 1 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(2, 2 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(3, 3 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(4, 4 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(5, 5 * sizeof(uint32_t),
-                                                sizeof(uint32_t))};
-  VkSpecializationInfo specializationInfo =
-      vks::initializers::specializationInfo(6, specializationMapEntry,
-                                            sizeof(SpecializationData),
-                                            &specializationData);
-#endif
+  VkSpecializationInfo specializationInfo = createSpecializationData(params_);
   VkPipelineShaderStageCreateInfo shaderStage = {};
   shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   shaderStage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
@@ -1329,40 +1348,8 @@ VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
   VkComputePipelineCreateInfo computePipelineCreateInfo =
       vks::initializers::computePipelineCreateInfo(pipelineLayout_, 0);
 
-#if 1
   // Pass SSBO size via specialization constant
-  struct SpecializationData {
-    uint32_t inputWidth;
-    uint32_t inputHeight;
-    uint32_t filterWidth;
-    uint32_t filterHeight;
-    uint32_t outputWidth;
-    uint32_t outputHeight;
-  } specializationData;
-  specializationData.inputWidth = params_.inputWidth;
-  specializationData.inputHeight = params_.inputHeight;
-  specializationData.filterWidth = params_.filterWidth;
-  specializationData.filterHeight = params_.filterHeight;
-  specializationData.outputWidth = params_.outputWidth;
-  specializationData.outputHeight = params_.outputHeight;
-  VkSpecializationMapEntry specializationMapEntry[] = {
-      vks::initializers::specializationMapEntry(0, 0 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(1, 1 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(2, 2 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(3, 3 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(4, 4 * sizeof(uint32_t),
-                                                sizeof(uint32_t)),
-      vks::initializers::specializationMapEntry(5, 5 * sizeof(uint32_t),
-                                                sizeof(uint32_t))};
-  VkSpecializationInfo specializationInfo =
-      vks::initializers::specializationInfo(6, specializationMapEntry,
-                                            sizeof(SpecializationData),
-                                            &specializationData);
-#endif
+  VkSpecializationInfo specializationInfo = createSpecializationData(params_);
 
   VkPipelineShaderStageCreateInfo shaderStage = {};
   shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -1566,6 +1553,10 @@ void ComputeOp::summaryOfInput() const {
       params_.filterHeight);
   LOG(" Output: width x height = %dx%d\n", params_.outputWidth,
       params_.outputWidth);
+  LOG(" Work group size: %dx%dx%d\n", params_.WORKGROUPSIZE_X,
+      params_.WORKGROUPSIZE_Y,params_.WORKGROUPSIZE_Z);
+  LOG(" Dispatch size: %dx%dx%d\n", params_.DISPATCH_X,
+      params_.DISPATCH_Y,params_.DISPATCH_Z);
   LOG("***********\n");
 }
 
