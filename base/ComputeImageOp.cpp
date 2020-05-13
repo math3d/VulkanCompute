@@ -49,7 +49,7 @@ void ComputeImageOp::execute() {
     TIME("execute:copyHostBufferToDeviceImage",
          copyHostBufferToDeviceImage(image_, hostBuffer_, params_.inputWidth,
                                      params_.inputHeight));
-#if USE_READBACK_INPUT
+#ifdef USE_READBACK_INPUT
     // Debug only.
     copyDeviceImageToHostBuffer(image_, params_.computeInput.data(), bufferSize,
                                 params_.inputWidth, params_.inputHeight);
@@ -75,7 +75,7 @@ void ComputeImageOp::execute() {
          copyHostBufferToDeviceImage(filterImage_, filterHostBuffer_,
                                      params_.filterWidth,
                                      params_.filterHeight));
-#if USE_READBACK_INPUT
+#ifdef USE_READBACK_INPUT
     // Debug only.
     copyDeviceImageToHostBuffer(filterImage_, params_.computeFilter.data(),
                                 filterBufferSize, params_.filterWidth,

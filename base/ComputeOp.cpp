@@ -575,7 +575,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
 #else
   memcpy(dst, data, bufferSize);
 #endif
-#if USE_READBACK_INPUT
+#ifdef USE_READBACK_INPUT
   // Fix msvc: expression did not evaluate to a constant
 
   DATA_TYPE *tmpout = new DATA_TYPE[width * height];

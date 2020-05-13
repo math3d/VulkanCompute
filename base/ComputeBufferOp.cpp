@@ -45,7 +45,7 @@ void ComputeBufferOp::execute() {
 
     TIME("execute:copyHostBufferToDeviceBuffer",
          copyHostBufferToDeviceBuffer(deviceBuffer_, hostBuffer_, bufferSize));
-#if USE_READBACK_INPUT
+#ifdef USE_READBACK_INPUT
     // Debug only.
     copyDeviceBufferToHostBuffer(deviceBuffer_, params_.computeInput.data(),
                                  bufferSize, params_.inputWidth,
@@ -74,7 +74,7 @@ void ComputeBufferOp::execute() {
     TIME("execute:copyHostBufferToDeviceBuffer",
          copyHostBufferToDeviceBuffer(filterDeviceBuffer_, filterHostBuffer_,
                                       filterBufferSize));
-#if USE_READBACK_INPUT
+#ifdef USE_READBACK_INPUT
     // Debug only.
     copyDeviceBufferToHostBuffer(filterDeviceBuffer_,
                                  params_.computeFilter.data(), filterBufferSize,

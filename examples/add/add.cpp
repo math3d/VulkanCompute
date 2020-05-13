@@ -33,8 +33,8 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 int main() {
   // works: 4x8; 32x1.
-  const int width = 2048;
-  const int height = 2048;
+  const int width = 4;
+  const int height = 8;
   const int WORKGROUPSIZE_X = 1;
   const int WORKGROUPSIZE_Y = 1;
   const int WORKGROUPSIZE_Z = 1;
@@ -76,7 +76,8 @@ int main() {
   ComputeOp *computeOp = new ComputeBufferOp(params);
   computeOp->summaryOfInput();
   TIME("execute", computeOp->execute());
-  // computeOp->summary();
+  if (width*height < 2000)
+    computeOp->summary();
   delete (computeOp);
   return 0;
 }
