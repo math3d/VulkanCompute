@@ -246,6 +246,14 @@ ComputeOp::copyHostBufferToDeviceBuffer(VkBuffer &deviceBuffer,
 VkResult ComputeOp::createDeviceImage(VkImage &image, const int width,
                                       const int height) {
   VkFormat format = imageFormat_;
+  VkFormatProperties formatProperties;
+
+  // Get device properties for the requested texture format
+  vkGetPhysicalDeviceFormatProperties(physicalDevice_, format,
+                                      &formatProperties);
+  // Check if requested image format supports image storage operations
+  assert(formatProperties.optimalTilingFeatures &
+         VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
   // Create optimal tiled target image on the device
   VkImageCreateInfo imageCreateInfo = initImageCreateInfo();
   imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
