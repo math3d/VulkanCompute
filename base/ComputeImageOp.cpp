@@ -6,9 +6,9 @@
  */
 #define USE_TIME
 #include "ComputeImageOp.h"
-#include <time.h>
 
 #ifdef USE_TIME
+#include <time.h>
 #include "Utils.h"
 #else
 #define TIME

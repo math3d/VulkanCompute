@@ -1605,8 +1605,6 @@ ComputeOp::ComputeOp(const InitParams &init_params) : params_(init_params) {
   prepareDevice();
 }
 
-void ComputeOp::executeWithTime() { TIME("execute", execute()); }
-
 ComputeOp::~ComputeOp() {
   // Clean up.
   vkDestroyBuffer(device_, deviceBuffer_, nullptr);

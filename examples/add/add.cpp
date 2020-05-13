@@ -16,6 +16,14 @@
 #include <vector>
 
 #include "ComputeBufferOp.h"
+#define USE_TIME
+
+#ifdef USE_TIME
+#include "Utils.h"
+#include <time.h>
+#else
+#define TIME
+#endif
 
 #define DEBUG (!NDEBUG)
 
@@ -59,7 +67,7 @@ int main() {
 
   ComputeOp *computeOp = new ComputeBufferOp(params);
   computeOp->summaryOfInput();
-  computeOp->executeWithTime();
+  TIME("execute", computeOp->execute());
   // computeOp->summary();
   delete (computeOp);
   return 0;
