@@ -17,6 +17,15 @@
 
 #include "ComputeCopyImageOp.h"
 
+#define USE_TIME
+
+#ifdef USE_TIME
+#include "Utils.h"
+#include <time.h>
+#else
+#define TIME
+#endif
+
 #define DEBUG (!NDEBUG)
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -72,8 +81,11 @@ int main() {
   params.shader_path = "shaders/add_image/add_image.comp.spv";
 
   ComputeOp *computeOp = new ComputeCopyImageOp(params);
-  computeOp->execute();
-  // computeOp->summary();
+  computeOp->summaryOfInput();
+
+  TIME("execute", computeOp->execute());
+  if (width*height < 2000)
+    computeOp->summary();
   delete (computeOp);
   return 0;
 }
