@@ -380,8 +380,8 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
     // is contained within srcBuffer'
     // (https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#VUID-vkCmdCopyBufferToImage-pRegions-00171)
     if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
-      bufferCopyRegion.imageExtent.width = width / 2;
-      bufferCopyRegion.imageExtent.height = height / 2;
+      bufferCopyRegion.imageExtent.width = ceil(width / 2);
+      bufferCopyRegion.imageExtent.height = ceil(height / 2);
     } else
 #endif
     {
@@ -482,8 +482,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   imageCreateCI.format = imageFormat_;
   // TODO: Try more formats.Or do this in a function.
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
-    imageCreateCI.extent.width = width / 2;
-    imageCreateCI.extent.height = height / 2;
+    imageCreateCI.extent.width = ceil(width / 2);
+    imageCreateCI.extent.height = ceil(height / 2);
   } else {
     imageCreateCI.extent.width = width;
     imageCreateCI.extent.height = height;
@@ -538,8 +538,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   imageCopyRegion.dstSubresource.layerCount = 1;
   // TODO: Try more formats.Or do this in a function.
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
-    imageCopyRegion.extent.width = width / 2;
-    imageCopyRegion.extent.height = height / 2;
+    imageCopyRegion.extent.width = ceil(width / 2);
+    imageCopyRegion.extent.height = ceil(height / 2);
   } else {
     imageCopyRegion.extent.width = width;
     imageCopyRegion.extent.height = height;

@@ -32,8 +32,8 @@ int main() {
 #endif
 #if 1
   // TODO: understand 4x8. When height is 1, ceil when height/2.
-  const int width = 32;
-  const int height = 1;
+  const int width = 4;
+  const int height = 8;
   const int WORKGROUPSIZE_X = 1;
   const int WORKGROUPSIZE_Y = 1;
   const int WORKGROUPSIZE_Z = 1;
@@ -61,11 +61,11 @@ int main() {
   // Fill input data
   uint32_t n = 0;
   std::generate(computeInput.begin(), computeInput.end(),
-                [&n] { return 33 + n++; });
+                [&n] { return n++; });
 
   uint32_t m = 0;
   std::generate(computeFilter.begin(), computeFilter.end(),
-                [&m] { return 125 + m++; });
+                [&m] { return m++; });
   params.computeInput = computeInput;
   params.computeFilter = computeFilter;
   params.computeOutput = computeOutput;
