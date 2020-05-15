@@ -16,7 +16,7 @@
 #include <string.h>
 #include <vector>
 
-
+#include "CommandLineParser.h"
 #include "ComputeBufferOp.h"
 #define USE_TIME
 
@@ -32,10 +32,11 @@
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 void android_main(android_app *state) { android_realmain(state); }
 #else
-int main() {
+int main(int argc, char **argv) {
+  CommandLineParser cmdLine(argc, argv);
   // works: 4x8; 32x1.
-  const int width = 2048;
-  const int height = 2048;
+  const int width = cmdLine.getWidth();
+  const int height = cmdLine.getHeight();
   const int WORKGROUPSIZE_X = 1;
   const int WORKGROUPSIZE_Y = 1;
   const int WORKGROUPSIZE_Z = 1;

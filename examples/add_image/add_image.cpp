@@ -16,7 +16,9 @@
 #include <vector>
 #include <math.h>
 
+#include "CommandLineParser.h"
 #include "ComputeImageOp.h"
+
 #define USE_TIME
 
 #ifdef USE_TIME
@@ -33,11 +35,12 @@
 void android_main(android_app *state) { android_realmain(state); }
 #else
 
-int main() {
+int main(int argc, char **argv) {
+  CommandLineParser cmdLine(argc, argv);
   // NV: works: 32x1; 4x8.
   // HD: works: 32x1; not work: 4x8.
-  const int width = 2048;
-  const int height = 2048;
+  const int width = cmdLine.getWidth();
+  const int height = cmdLine.getHeight();
   const int WORKGROUPSIZE_X = 1;
   const int WORKGROUPSIZE_Y = 1;
   const int WORKGROUPSIZE_Z = 1;
