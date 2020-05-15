@@ -57,8 +57,26 @@ struct SpecializationData {
 #endif
 };
 
+struct DispatchSize {
+  uint32_t dispatchX;
+  uint32_t dispatchY;
+  uint32_t dispatchZ;
+};
+
+static DispatchSize getDispatchSize(const uint32_t dispatchX,
+                                    const uint32_t dispatchY,
+                                    const uint32_t dispatchZ,
+                                    const VkFormat format, uint32_t vendorID) {
+  DispatchSize dispatchSize = {dispatchX, dispatchY, dispatchZ};
+  if (format == VK_FORMAT_R32G32B32A32_SFLOAT && vendorID != 4318) {
+    dispatchSize.dispatchX = dispatchX * 2;
+    dispatchSize.dispatchY = dispatchY * 2;
+  }
+  return dispatchSize;
+}
+
 static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
-                                    const VkFormat format) {
+                                    const VkFormat format, uint32_t vendorID) {
   VkExtent3D extent;
   // Fix for: [VALIDATION]: IMAGE - vkCmdCopyBufferToImage(): pRegion[0]
   // exceeds buffer size of 4 bytes. The spec valid usage text states 'The
@@ -66,8 +84,14 @@ static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
   // is contained within srcBuffer'
   // (https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#VUID-vkCmdCopyBufferToImage-pRegions-00171)
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
-    extent.width = ceil(width / 2);
-    extent.height = ceil(height / 2);
+    // NV ID 4318.
+    if (vendorID != 4318) {
+      extent.width = (width * 2);
+      extent.height = (height * 2);
+    } else {
+      extent.width = ceil(width / 2);
+      extent.height = ceil(height / 2);
+    }
   } else {
     extent.width = width;
     extent.height = height;
@@ -153,7 +177,8 @@ VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height,
   VkImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
   imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
   imageCreateInfo.format = format;
-  imageCreateInfo.extent = {width, height, 1};
+  imageCreateInfo.extent =
+      getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
   imageCreateInfo.mipLevels = 1;
   imageCreateInfo.arrayLayers = 1;
   imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -284,7 +309,8 @@ VkResult ComputeOp::createDeviceImage(VkImage &image, const int width,
   imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   // Set initial layout of the image to undefined
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageCreateInfo.extent = getExtentOfFormat(width, height, format);
+  imageCreateInfo.extent =
+      getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
@@ -392,7 +418,8 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
     bufferCopyRegion.imageSubresource.mipLevel = i;
     bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
     bufferCopyRegion.imageSubresource.layerCount = 1;
-    bufferCopyRegion.imageExtent = getExtentOfFormat(width, height, format);
+    bufferCopyRegion.imageExtent =
+        getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
     bufferCopyRegion.bufferOffset = offset;
 
     bufferCopyRegions.push_back(bufferCopyRegion);
@@ -485,7 +512,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   // the swapchain color format would differ
   imageCreateCI.format = imageFormat_;
   // TODO: Try more formats. Or do this in a function.
-  imageCreateCI.extent = getExtentOfFormat(width, height, format);
+  imageCreateCI.extent =
+      getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
   imageCreateCI.arrayLayers = 1;
   imageCreateCI.mipLevels = 1;
   imageCreateCI.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -534,7 +562,8 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   imageCopyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   imageCopyRegion.dstSubresource.layerCount = 1;
   // TODO: Try more formats.Or do this in a function.
-  imageCopyRegion.extent = getExtentOfFormat(width, height, format);
+  imageCopyRegion.extent =
+      getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
 
   // Issue the copy command
   vkCmdCopyImage(copyCmd, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage,
@@ -774,8 +803,11 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                       queryPool_, 0);
 #endif
-
-  vkCmdDispatch(commandBuffer_, params_.DISPATCH_X, params_.DISPATCH_Y, 1);
+  DispatchSize dispatchSize =
+      getDispatchSize(params_.DISPATCH_X, params_.DISPATCH_Y, 1, imageFormat_,
+                      deviceProperties_.vendorID);
+  vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
+                1);
 #ifdef USE_TIMESTAMP
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                       queryPool_, 1);
@@ -906,7 +938,11 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                       queryPool_, 0);
 #endif
-  vkCmdDispatch(commandBuffer_, params_.DISPATCH_X, params_.DISPATCH_Y, 1);
+  DispatchSize dispatchSize =
+      getDispatchSize(params_.DISPATCH_X, params_.DISPATCH_Y, 1, imageFormat_,
+                      deviceProperties_.vendorID);
+  vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
+                1);
 #ifdef USE_TIMESTAMP
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                       queryPool_, 1);
@@ -1043,7 +1079,10 @@ VkResult ComputeOp::prepareDevice() {
   // VkPhysicalDeviceProperties deviceProperties;
   vkGetPhysicalDeviceProperties(physicalDevice_, &deviceProperties_);
   LOG("***********: GPU INFO:\n");
-  LOG("GPU: %s\n", deviceProperties_.deviceName);
+  LOG("%s\n", deviceProperties_.deviceName);
+  LOG("vendorID: %d\n", deviceProperties_.vendorID);
+  LOG("deviceID: %d\n", deviceProperties_.deviceID);
+  LOG("deviceType: %d\n", deviceProperties_.deviceType);
 
   LOG("GPU: maxComputeWorkGroupCount = %d, %d, %d\n",
       deviceProperties_.limits.maxComputeWorkGroupCount[0],
