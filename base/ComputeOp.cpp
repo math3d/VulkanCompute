@@ -607,7 +607,6 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
     // Fix msvc: expression did not evaluate to a constant
     DATA_TYPE *tmpout = new DATA_TYPE[width * height];
     memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
-    // for (uint32_t y = 0; y < width * height*sizeof(DATA_TYPE); y++)
     for (uint32_t y = 0; y < width * height; y++) {
       LOG("%f,", (DATA_TYPE) * (tmpout + y));
       if (((y + 1) % height) == 0)

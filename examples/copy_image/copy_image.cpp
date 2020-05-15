@@ -15,6 +15,7 @@
 #include <string.h>
 #include <vector>
 
+#include "CommandLineParser.h"
 #include "ComputeCopyImageOp.h"
 
 #define USE_TIME
@@ -31,7 +32,7 @@
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 void android_main(android_app *state) { android_realmain(state); }
 #else
-int main() {
+int main(int argc, char **argv) {
 #if 0
 #define BUFFER_ELEMENTS 32
   ComputeOp::InitParams params;
@@ -41,8 +42,9 @@ int main() {
 #endif
 #if 1
   // TODO: understand 4x8. When height is 1, ceil when height/2.
-  const int width = 4;
-  const int height = 8;
+  CommandLineParser cmdLine(argc, argv);
+  const int width = cmdLine.getWidth();
+  const int height = cmdLine.getHeight();
   const int WORKGROUPSIZE_X = 1;
   const int WORKGROUPSIZE_Y = 1;
   const int WORKGROUPSIZE_Z = 1;
