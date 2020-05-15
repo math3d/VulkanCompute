@@ -10,11 +10,12 @@
 
 #include <algorithm>
 #include <iostream>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
-#include <math.h>
+
 
 #include "ComputeBufferOp.h"
 #define USE_TIME
@@ -33,8 +34,8 @@ void android_main(android_app *state) { android_realmain(state); }
 #else
 int main() {
   // works: 4x8; 32x1.
-  const int width = 4;
-  const int height = 8;
+  const int width = 2048;
+  const int height = 2048;
   const int WORKGROUPSIZE_X = 1;
   const int WORKGROUPSIZE_Y = 1;
   const int WORKGROUPSIZE_Z = 1;
@@ -46,8 +47,8 @@ int main() {
   params.filterHeight = height;
   params.outputWidth = width;
   params.outputHeight = height;
-  params.DISPATCH_X = ceil((float)width/WORKGROUPSIZE_X);
-  params.DISPATCH_Y = ceil((float)height/WORKGROUPSIZE_Y);
+  params.DISPATCH_X = ceil((float)width / WORKGROUPSIZE_X);
+  params.DISPATCH_Y = ceil((float)height / WORKGROUPSIZE_Y);
   params.DISPATCH_Z = 1;
   params.WORKGROUPSIZE_X = WORKGROUPSIZE_X;
   params.WORKGROUPSIZE_Y = WORKGROUPSIZE_Y;
@@ -76,7 +77,7 @@ int main() {
   ComputeOp *computeOp = new ComputeBufferOp(params);
   computeOp->summaryOfInput();
   TIME("execute", computeOp->execute());
-  if (width*height < 2000)
+  if (width * height < 2000)
     computeOp->summary();
   delete (computeOp);
   return 0;

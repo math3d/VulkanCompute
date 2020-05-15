@@ -603,17 +603,19 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   memcpy(dst, data, bufferSize);
 #endif
 #ifdef USE_READBACK_INPUT
-  // Fix msvc: expression did not evaluate to a constant
-  DATA_TYPE *tmpout = new DATA_TYPE[width * height];
-  memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
-  // for (uint32_t y = 0; y < width * height*sizeof(DATA_TYPE); y++)
-  for (uint32_t y = 0; y < width * height; y++) {
-    LOG("%f,", (DATA_TYPE) * (tmpout + y));
-    if (((y + 1) % height) == 0)
-      LOG("\n");
+  if (width * height < 2000) {
+    // Fix msvc: expression did not evaluate to a constant
+    DATA_TYPE *tmpout = new DATA_TYPE[width * height];
+    memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
+    // for (uint32_t y = 0; y < width * height*sizeof(DATA_TYPE); y++)
+    for (uint32_t y = 0; y < width * height; y++) {
+      LOG("%f,", (DATA_TYPE) * (tmpout + y));
+      if (((y + 1) % height) == 0)
+        LOG("\n");
+    }
+    LOG("\n");
+    delete tmpout;
   }
-  LOG("\n");
-  delete tmpout;
 #endif
 
 #ifdef SAVE_TO_FILE

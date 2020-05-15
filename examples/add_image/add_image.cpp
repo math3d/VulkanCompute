@@ -36,8 +36,8 @@ void android_main(android_app *state) { android_realmain(state); }
 int main() {
   // NV: works: 32x1; 4x8.
   // HD: works: 32x1; not work: 4x8.
-  const int width = 4;
-  const int height = 8;
+  const int width = 2048;
+  const int height = 2048;
   const int WORKGROUPSIZE_X = 1;
   const int WORKGROUPSIZE_Y = 1;
   const int WORKGROUPSIZE_Z = 1;
