@@ -86,8 +86,8 @@ static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
     // NV ID 4318.
     if (vendorID != 4318) {
-      extent.width = (width * 2);
-      extent.height = (height * 2);
+      extent.width = (width * height / 4);
+      extent.height = 1; // (height);
     } else {
       extent.width = ceil(width / 2);
       extent.height = ceil(height / 2);
@@ -214,7 +214,9 @@ VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height) {
 
   // flushCommandBuffer(layoutCmd, queue, true);
   flushCommandBuffer(device_, commandPool_, layoutCmd, queue_, true);
+  createSampler(outputImage_, outputImageSampler_, outputImageView_);
 
+#if 0
   // Create sampler
   VkSamplerCreateInfo sampler = vks::initializers::samplerCreateInfo();
   sampler.magFilter = VK_FILTER_LINEAR;
@@ -234,7 +236,6 @@ VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height) {
 
   // Create image view
   VkImageViewCreateInfo viewInfo = vks::initializers::imageViewCreateInfo();
-  viewInfo.image = VK_NULL_HANDLE;
   viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
   viewInfo.format = format;
   viewInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
@@ -243,6 +244,7 @@ VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height) {
   viewInfo.image = outputImage_;
   VK_CHECK_RESULT(
       vkCreateImageView(device_, &viewInfo, nullptr, &outputImageView_));
+#endif
   return VK_SUCCESS;
 }
 
@@ -343,8 +345,8 @@ VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler,
   samplerInfo.minFilter = VK_FILTER_LINEAR;
   samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+  samplerInfo.addressModeV = samplerInfo.addressModeU;
+  samplerInfo.addressModeW = samplerInfo.addressModeU;
   samplerInfo.mipLodBias = 0.0f;
   samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
   samplerInfo.minLod = 0.0f;
@@ -382,13 +384,7 @@ VkResult ComputeOp::createSampler(VkImage &image, VkSampler &sampler,
   // that can be accessed through this image view It's possible to create
   // multiple image views for a single image referring to different (and/or
   // overlapping) ranges of the image
-  viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  viewInfo.subresourceRange.baseMipLevel = 0;
-  viewInfo.subresourceRange.baseArrayLayer = 0;
-  viewInfo.subresourceRange.layerCount = 1;
-  // Linear tiling usually won't support mip maps
-  // Only set mip map count if optimal tiling is used
-  viewInfo.subresourceRange.levelCount = mipLevels; // : 1;
+  viewInfo.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1};
   // The view will be based on the texture's image
   viewInfo.image = image;
   VK_CHECK_RESULT(vkCreateImageView(device_, &viewInfo, nullptr, &view));
