@@ -161,8 +161,8 @@ VkResult ComputeOp::createBufferWithData(
 // Prepare a texture target that is used to store compute shader calculations
 // createTextureTarget. Used for Image2Image.
 
-VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height,
-                                        VkFormat format) {
+VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height) {
+  VkFormat format = imageFormat_;
   VkFormatProperties formatProperties;
 
   // Get device properties for the requested texture format
@@ -172,34 +172,30 @@ VkResult ComputeOp::createTextureTarget(uint32_t width, uint32_t height,
   assert(formatProperties.optimalTilingFeatures &
          VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
 
-  // Prepare blit target texture
-
+  // Create optimal tiled target image on the device
   VkImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
   imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
   imageCreateInfo.format = format;
   imageCreateInfo.extent =
       getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
-  imageCreateInfo.mipLevels = 1;
+  imageCreateInfo.mipLevels = mipLevels;
   imageCreateInfo.arrayLayers = 1;
   imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  // Image will be sampled in the fragment shader and used as storage target in
-  // the compute shader
+  // Set initial layout of the image to undefined
+  imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
   imageCreateInfo.flags = 0;
-  // Sharing mode exclusive means that ownership of the image does not need to
-  // be explicitly transferred between the compute and graphics queue
   imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-  VkMemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
-  VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(
       vkCreateImage(device_, &imageCreateInfo, nullptr, &outputImage_));
 
+  VkMemoryRequirements memReqs = {};
   vkGetImageMemoryRequirements(device_, outputImage_, &memReqs);
+  VkMemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
   memAllocInfo.allocationSize = memReqs.size;
   memAllocInfo.memoryTypeIndex =
       getMemoryType(deviceMemoryProperties_, memReqs.memoryTypeBits,
@@ -298,38 +294,35 @@ VkResult ComputeOp::createDeviceImage(VkImage &image, const int width,
   // Check if requested image format supports image storage operations
   assert(formatProperties.optimalTilingFeatures &
          VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
+
   // Create optimal tiled target image on the device
-  VkImageCreateInfo imageCreateInfo = initImageCreateInfo();
+  VkImageCreateInfo imageCreateInfo = vks::initializers::imageCreateInfo();
   imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
   imageCreateInfo.format = format;
+  imageCreateInfo.extent =
+      getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
   imageCreateInfo.mipLevels = mipLevels;
   imageCreateInfo.arrayLayers = 1;
   imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   // Set initial layout of the image to undefined
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageCreateInfo.extent =
-      getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+  imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
   VK_CHECK_RESULT(vkCreateImage(device_, &imageCreateInfo, nullptr, &image));
+
   VkMemoryRequirements memReqs = {};
-  VkMemoryAllocateInfo memAllocInfo = memoryAllocateInfo();
   vkGetImageMemoryRequirements(device_, image, &memReqs);
+  VkMemoryAllocateInfo memAllocInfo = vks::initializers::memoryAllocateInfo();
   memAllocInfo.allocationSize = memReqs.size;
   memAllocInfo.memoryTypeIndex =
       getMemoryType(deviceMemoryProperties_, memReqs.memoryTypeBits,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   VkDeviceMemory deviceMemory;
-
-  memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex =
-      getMemoryType(deviceMemoryProperties_, memReqs.memoryTypeBits,
-                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
   VK_CHECK_RESULT(
       vkAllocateMemory(device_, &memAllocInfo, nullptr, &deviceMemory));
   VK_CHECK_RESULT(vkBindImageMemory(device_, image, deviceMemory, 0));

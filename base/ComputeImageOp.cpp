@@ -84,8 +84,7 @@ void ComputeImageOp::execute() {
   }
   {
     TIME("execute:createTextureTarget",
-         createTextureTarget(params_.outputWidth, params_.outputHeight,
-                             imageFormat_));
+         createTextureTarget(params_.outputWidth, params_.outputHeight));
   }
   // Prepare compute pipeline.
   TIME("execute:prepareImageToImagePipeline", prepareImageToImagePipeline());

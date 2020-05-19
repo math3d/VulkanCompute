@@ -124,8 +124,7 @@ protected:
                                         VkBuffer &outputDeviceBuffer);
   VkResult prepareImageToImagePipeline();
 
-  VkResult createTextureTarget(uint32_t width, uint32_t height,
-                               VkFormat format);
+  VkResult createTextureTarget(uint32_t width, uint32_t height);
   VkResult prepareDebugLayer();
   VkResult prepareDevice();
 
