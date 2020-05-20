@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
   params.format = VK_FORMAT_R32_SFLOAT;
 
   ComputeOp *computeOp = new ComputeImageOp(params);
+  computeOp->summaryOfInput();
   computeOp->execute();
   computeOp->summary();
   delete (computeOp);

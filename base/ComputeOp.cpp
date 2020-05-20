@@ -78,6 +78,7 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
 static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
                                     const VkFormat format, uint32_t vendorID) {
   VkExtent3D extent;
+  extent.depth = 1;
   // Fix for: [VALIDATION]: IMAGE - vkCmdCopyBufferToImage(): pRegion[0]
   // exceeds buffer size of 4 bytes. The spec valid usage text states 'The
   // buffer region specified by each element of pRegions must be a region that
@@ -92,11 +93,13 @@ static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
       extent.width = ceil(width / 2);
       extent.height = ceil(height / 2);
     }
+  } else if (format == VK_FORMAT_R32_SFLOAT) {
+    extent.width = width*2;// *2;
+    extent.height = height*2;// *4;
   } else {
     extent.width = width;
     extent.height = height;
   }
-  extent.depth = 1;
   return extent;
 }
 
@@ -582,21 +585,26 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
 
   // Map image memory so we can start copying from it
-  const void *data;
+  const DATA_TYPE *data;
   vkMapMemory(device_, dstImageMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
   // Copy to output.
+  uint32_t multiplier = 1;
+  if (format == VK_FORMAT_R32_SFLOAT) {
+    multiplier = 2;
+  }
 #ifdef USE_TIME
   TIMEWITHSIZE("    copyDeviceImageToHostBuffer:memcpy HOST image to CPU",
-               memcpy(dst, data, bufferSize), bufferSize);
+               memcpy(dst, data, bufferSize * multiplier),
+               bufferSize * multiplier);
 #else
-  memcpy(dst, data, bufferSize);
+  memcpy(dst, data, bufferSize * multiplier);
 #endif
 #ifdef USE_READBACK_INPUT
   if (width * height < MAX_LOG) {
     // Fix msvc: expression did not evaluate to a constant
-    DATA_TYPE *tmpout = new DATA_TYPE[width * height];
-    memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
-    for (uint32_t y = 0; y < width * height; y++) {
+    DATA_TYPE *tmpout = new DATA_TYPE[width * height * multiplier];
+    memcpy(tmpout, data, width * height * sizeof(DATA_TYPE) * multiplier);
+    for (uint32_t y = 0; y < width * height * multiplier; y++) {
       LOG("%f,", (DATA_TYPE) * (tmpout + y));
       if (((y + 1) % height) == 0)
         LOG("\n");
@@ -632,18 +640,12 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   */
 
   // ppm binary pixel data
-  printf("\n Read pixel in PPM format:\n");
+  LOG("\n Read pixel in PPM format: subResourceLayout.rowPitch=%d\n",
+      subResourceLayout.rowPitch);
   for (uint32_t y = 0; y < height; y++) {
-    T *row = (T *)data;
+    DATA_TYPE *row = (DATA_TYPE *)data;
     for (uint32_t x = 0; x < width; x++) {
-      if (colorSwizzle) {
-        file.write((char *)row + 2, 1);
-        file.write((char *)row + 1, 1);
-        file.write((char *)row, 1);
-      } else {
-        file.write((char *)row, 3);
-      }
-      printf("%f,", (T)(*row));
+      LOG("%f,", (DATA_TYPE)(*row));
       row++;
     }
     printf("\n");

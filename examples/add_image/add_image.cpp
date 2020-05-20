@@ -10,11 +10,12 @@
 
 #include <algorithm>
 #include <iostream>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
-#include <math.h>
+
 
 #include "CommandLineParser.h"
 #include "ComputeImageOp.h"
@@ -27,7 +28,6 @@
 #else
 #define TIME
 #endif
-
 
 #define DEBUG (!NDEBUG)
 
@@ -52,8 +52,8 @@ int main(int argc, char **argv) {
   params.filterHeight = height;
   params.outputWidth = width;
   params.outputHeight = height;
-  params.DISPATCH_X = ceil((float)width/WORKGROUPSIZE_X);
-  params.DISPATCH_Y = ceil((float)height/WORKGROUPSIZE_Y);
+  params.DISPATCH_X = ceil((float)width / WORKGROUPSIZE_X);
+  params.DISPATCH_Y = ceil((float)height / WORKGROUPSIZE_Y);
   params.DISPATCH_Z = 1;
   params.WORKGROUPSIZE_X = WORKGROUPSIZE_X;
   params.WORKGROUPSIZE_Y = WORKGROUPSIZE_Y;
