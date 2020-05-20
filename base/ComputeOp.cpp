@@ -1659,7 +1659,7 @@ void ComputeOp::summary() const {
       params_.computeFilter[params_.inputWidth * params_.inputHeight - 1],
       params_.computeOutput[params_.outputWidth * params_.outputHeight - 1]);
 
-  if (width * height < MAX_LOG) {
+  if (params_.inputWidth * params_.inputHeight < MAX_LOG) {
     return;
   }
   LOG("\nCompute input:\n");
