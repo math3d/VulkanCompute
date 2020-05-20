@@ -69,8 +69,8 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
                                     const VkFormat format, uint32_t vendorID) {
   DispatchSize dispatchSize = {dispatchX, dispatchY, dispatchZ};
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT && vendorID != 4318) {
-    dispatchSize.dispatchX = dispatchX;// *dispatchY;
-    dispatchSize.dispatchY = ceil(dispatchY / 4);//1;//dispatchY * 1;
+    dispatchSize.dispatchX = dispatchX;           // *dispatchY;
+    dispatchSize.dispatchY = ceil(dispatchY / 4); // 1;//dispatchY * 1;
   }
   return dispatchSize;
 }
@@ -1654,6 +1654,14 @@ void ComputeOp::summaryOfInput() const {
 }
 
 void ComputeOp::summary() const {
+  LOG("summary: %f + %f = %f\n",
+      params_.computeInput[params_.inputWidth * params_.inputHeight - 1],
+      params_.computeFilter[params_.inputWidth * params_.inputHeight - 1],
+      params_.computeOutput[params_.outputWidth * params_.outputHeight - 1]);
+
+  if (width * height < MAX_LOG) {
+    return;
+  }
   LOG("\nCompute input:\n");
   for (auto v : params_.computeInput) {
     if (DATA_TYPE_ID == 0)

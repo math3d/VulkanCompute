@@ -78,8 +78,7 @@ int main(int argc, char **argv) {
   ComputeOp *computeOp = new ComputeBufferOp(params);
   computeOp->summaryOfInput();
   TIME("execute", computeOp->execute());
-  if (width * height < 2000)
-    computeOp->summary();
+  computeOp->summary();
   delete (computeOp);
   return 0;
 }

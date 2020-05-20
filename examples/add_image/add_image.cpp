@@ -84,8 +84,7 @@ int main(int argc, char **argv) {
   computeOp->summaryOfInput();
 
   TIME("execute", computeOp->execute());
-  if (width*height < MAX_LOG)
-    computeOp->summary();
+  computeOp->summary();
   delete (computeOp);
   return 0;
 }
