@@ -33,6 +33,7 @@
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 android_app *androidapp;
 #endif
+#define MAX_LOG 4096
 
 #define DEBUG (!NDEBUG)
 

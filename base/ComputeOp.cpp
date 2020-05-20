@@ -69,8 +69,8 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
                                     const VkFormat format, uint32_t vendorID) {
   DispatchSize dispatchSize = {dispatchX, dispatchY, dispatchZ};
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT && vendorID != 4318) {
-    dispatchSize.dispatchX = dispatchX * 2;
-    dispatchSize.dispatchY = dispatchY * 2;
+    dispatchSize.dispatchX = dispatchX;// *dispatchY;
+    dispatchSize.dispatchY = ceil(dispatchY / 4);//1;//dispatchY * 1;
   }
   return dispatchSize;
 }
@@ -86,8 +86,8 @@ static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
     // NV ID 4318.
     if (vendorID != 4318) {
-      extent.width = (width * height / 4);
-      extent.height = 1; // (height);
+      extent.width = (width);
+      extent.height = ceil(height / 4); // (height);
     } else {
       extent.width = ceil(width / 2);
       extent.height = ceil(height / 2);
@@ -592,7 +592,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
   memcpy(dst, data, bufferSize);
 #endif
 #ifdef USE_READBACK_INPUT
-  if (width * height < 2000) {
+  if (width * height < MAX_LOG) {
     // Fix msvc: expression did not evaluate to a constant
     DATA_TYPE *tmpout = new DATA_TYPE[width * height];
     memcpy(tmpout, data, width * height * sizeof(DATA_TYPE));
