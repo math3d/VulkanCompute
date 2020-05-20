@@ -71,8 +71,11 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT && vendorID != 4318) {
     dispatchSize.dispatchX = dispatchX;           // *dispatchY;
     dispatchSize.dispatchY = ceil(dispatchY / 4); // 1;//dispatchY * 1;
-  }
-  return dispatchSize;
+  } else if (format == VK_FORMAT_R32_SFLOAT) {
+    dispatchSize.dispatchX = dispatchX * 2; // *dispatchY;
+    dispatchSize.dispatchY = dispatchY / 2; // / 4); // 1;//dispatchY * 1;
+  } else
+    return dispatchSize;
 }
 
 static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
@@ -94,13 +97,23 @@ static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
       extent.height = ceil(height / 2);
     }
   } else if (format == VK_FORMAT_R32_SFLOAT) {
-    extent.width = width*2;// *2;
-    extent.height = height*2;// *4;
+    extent.width = width * 2;   // *2;
+    extent.height = height * 2; // *4;
   } else {
     extent.width = width;
     extent.height = height;
   }
   return extent;
+}
+
+static int getTexelBlockSize(VkFormat format) {
+  if (format == VK_FORMAT_R32G32B32A32_SFLOAT) {
+    return 16;
+  } else if (format == VK_FORMAT_R32_SFLOAT) {
+    return 4;
+  } else {
+    return 4;
+  }
 }
 
 ComputeOp::InitParams::InitParams() = default;
@@ -602,7 +615,7 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
 #ifdef USE_READBACK_INPUT
   if (width * height < MAX_LOG) {
     // Fix msvc: expression did not evaluate to a constant
-    DATA_TYPE *tmpout = new DATA_TYPE[width * height * multiplier];
+    DATA_TYPE *tmpout = new DATA_TYPE[width * height * multiplier]();
     memcpy(tmpout, data, width * height * sizeof(DATA_TYPE) * multiplier);
     for (uint32_t y = 0; y < width * height * multiplier; y++) {
       LOG("%f,", (DATA_TYPE) * (tmpout + y));
@@ -612,6 +625,21 @@ VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
     LOG("\n");
     delete tmpout;
   }
+#endif
+#if 0
+  const int rowLength = width;
+  const int imageHeight = height;
+  const int bufferOffset = 0;
+  const int texelBlockSize = getTexelBlockSize(format);
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      int bufferAddress =
+          bufferOffset +
+          +(((0 * imageHeight) + y) * rowLength + x) * texelBlockSize;
+      LOG(" %d, ", bufferAddress);
+    }
+  }
+  LOG("\n");
 #endif
 
 #ifdef SAVE_TO_FILE
