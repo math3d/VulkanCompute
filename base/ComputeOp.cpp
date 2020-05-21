@@ -499,10 +499,158 @@ VkResult ComputeOp::copyHostBufferToDeviceImage(VkImage &image,
   return VK_SUCCESS;
 }
 
+// TODO: Refine the barrier.
 VkResult ComputeOp::copyDeviceImageToHostBuffer(VkImage &image, void *dst,
                                                 const VkDeviceSize &bufferSize,
+
                                                 const uint32_t width,
                                                 const uint32_t height) {
+
+  VkBuffer hostBuffer;
+  VkDeviceMemory hostMemory;
+  // TODO: check if vkQueueWaitIdle is required.
+  vkQueueWaitIdle(queue_);
+  // const int bufferSize = width*height*sizeof(DATA_TYPE);
+  createBufferWithData(VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                           VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &hostBuffer,
+                       &hostMemory, width * height * sizeof(DATA_TYPE));
+
+  // Setup buffer copy regions for each mip level
+  std::vector<VkBufferImageCopy> bufferCopyRegions;
+  uint32_t offset = 0;
+  VkFormat format = imageFormat_;
+
+  for (uint32_t i = 0; i < mipLevels; i++) {
+    VkBufferImageCopy bufferCopyRegion = {};
+    bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    bufferCopyRegion.imageSubresource.mipLevel = i;
+    bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+    bufferCopyRegion.imageSubresource.layerCount = 1;
+    bufferCopyRegion.imageExtent =
+        getExtentOfFormat(width, height, format, deviceProperties_.vendorID);
+    bufferCopyRegion.bufferOffset = offset;
+
+    bufferCopyRegions.push_back(bufferCopyRegion);
+    // TODO: fix offset.
+  }
+
+  VkCommandBuffer copyCmd = createCommandBuffer(
+      device_, commandPool_, VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+  // Image memory barriers for the texture image
+
+  // The sub resource range describes the regions of the image that will be
+  // transitioned using the memory barriers below
+  VkImageSubresourceRange subresourceRange = {};
+  // Image only contains color data
+  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  // Start at first mip level
+  subresourceRange.baseMipLevel = 0;
+  // We will transition on all mip levels
+  subresourceRange.levelCount = mipLevels;
+  // The 2D texture only has one layer
+  subresourceRange.layerCount = 1;
+
+  // Transition the texture image layout to transfer target, so we can
+  // safely copy our buffer data to it.
+  VkImageMemoryBarrier imageMemoryBarrier =
+      vks::initializers::imageMemoryBarrier();
+  imageMemoryBarrier.image = image;
+  imageMemoryBarrier.subresourceRange = subresourceRange;
+  imageMemoryBarrier.srcAccessMask = 0;
+  imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+  imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+  // Insert a memory dependency at the proper pipeline stages that will
+  // execute the image layout transition Source pipeline stage is host
+  // write/read exection (VK_PIPELINE_STAGE_HOST_BIT) Destination pipeline
+  // stage is copy command exection (VK_PIPELINE_STAGE_TRANSFER_BIT)
+  vkCmdPipelineBarrier(copyCmd, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0,
+                       nullptr, 1, &imageMemoryBarrier);
+
+  // Copy mip levels from staging buffer.
+  // vkCmdCopyBufferToImage
+  vkCmdCopyImageToBuffer(copyCmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                         hostBuffer,
+                         static_cast<uint32_t>(bufferCopyRegions.size()),
+                         bufferCopyRegions.data());
+
+  // Once the data has been uploaded we transfer to the texture image to the
+  // shader read layout, so it can be sampled from
+  imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+  imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+  imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+  // Insert a memory dependency at the proper pipeline stages that will
+  // execute the image layout transition Source pipeline stage stage is copy
+  // command exection (VK_PIPELINE_STAGE_TRANSFER_BIT) Destination pipeline
+  // stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+  vkCmdPipelineBarrier(copyCmd, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0,
+                       nullptr, 1, &imageMemoryBarrier);
+
+  // Store current layout for later reuse
+  // texture.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  flushCommandBuffer(device_, commandPool_, copyCmd, queue_, true);
+
+  VkMappedMemoryRange mappedRange = vks::initializers::mappedMemoryRange();
+  mappedRange.memory = hostMemory;
+  mappedRange.offset = 0;
+  mappedRange.size = VK_WHOLE_SIZE;
+  // vkInvalidateMappedMemoryRanges(device_, 1, &mappedRange);
+
+  // Map image memory so we can start copying from it
+  const DATA_TYPE *data;
+  vkMapMemory(device_, hostMemory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
+  // Copy to output.
+  uint32_t multiplier = 1;
+  // if (format == VK_FORMAT_R32_SFLOAT) {
+  //  multiplier = 2;
+  //}
+#ifdef USE_TIME
+  TIMEWITHSIZE("    copyDeviceImageToHostBuffer:memcpy HOST image to CPU",
+               memcpy(dst, data, bufferSize * multiplier),
+               bufferSize * multiplier);
+#else
+  memcpy(dst, data, bufferSize * multiplier);
+#endif
+#ifdef USE_READBACK_INPUT
+  if (width * height < MAX_LOG) {
+    // Fix msvc: expression did not evaluate to a constant
+    DATA_TYPE *tmpout = new DATA_TYPE[width * height * multiplier]();
+    memcpy(tmpout, data, width * height * sizeof(DATA_TYPE) * multiplier);
+    for (uint32_t y = 0; y < width * height * multiplier; y++) {
+      LOG("%f,", (DATA_TYPE) * (tmpout + y));
+      if (((y + 1) % height) == 0)
+        LOG("\n");
+    }
+    LOG("\n");
+    delete tmpout;
+  }
+#endif
+
+  vkFlushMappedMemoryRanges(device_, 1, &mappedRange);
+  vkUnmapMemory(device_, hostMemory);
+
+  // vkUnmapMemory(device_, hostMemory);
+  vkFreeMemory(device_, hostMemory, nullptr);
+  vkDestroyBuffer(device_, hostBuffer, nullptr);
+
+  // Clean up staging resources
+  // vkFreeMemory(device, stagingMemory, nullptr);
+  // vkDestroyBuffer(device, stagingBuffer, nullptr);
+  return VK_SUCCESS;
+}
+
+VkResult ComputeOp::copyDeviceImageToHostBuffer2(VkImage &image, void *dst,
+                                                 const VkDeviceSize &bufferSize,
+                                                 const uint32_t width,
+                                                 const uint32_t height) {
 
   assert(dst);
   // Setup buffer copy regions for each mip level

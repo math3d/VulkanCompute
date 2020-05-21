@@ -97,13 +97,18 @@ protected:
                                 VkDeviceSize size, void *data = nullptr);
   VkResult createDeviceImage(VkImage &image, const int width, const int height);
   VkResult createSampler(VkImage &image, VkSampler &sampler, VkImageView &view);
-  VkResult copyHostBufferToDeviceBuffer(VkBuffer &deviceBuffer, VkBuffer &hostBuffer,
-                                  const VkDeviceSize &bufferSize);
+  VkResult copyHostBufferToDeviceBuffer(VkBuffer &deviceBuffer,
+                                        VkBuffer &hostBuffer,
+                                        const VkDeviceSize &bufferSize);
 
   VkResult copyHostBufferToDeviceImage(VkImage &image, VkBuffer &hostBuffer,
                                        const uint32_t width,
                                        const uint32_t height);
   VkResult copyDeviceImageToHostBuffer(VkImage &image, void *dst,
+                                        const VkDeviceSize &bufferSize,
+                                        const uint32_t width,
+                                        const uint32_t height);
+  VkResult copyDeviceImageToHostBuffer2(VkImage &image, void *dst,
                                        const VkDeviceSize &bufferSize,
                                        const uint32_t width,
                                        const uint32_t height);
