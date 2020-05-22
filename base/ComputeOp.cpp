@@ -69,11 +69,11 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
                                     const VkFormat format, uint32_t vendorID) {
   DispatchSize dispatchSize = {dispatchX, dispatchY, dispatchZ};
   if (format == VK_FORMAT_R32G32B32A32_SFLOAT && vendorID != 4318) {
-    dispatchSize.dispatchX = dispatchX;           // *dispatchY;
-    dispatchSize.dispatchY = ceil(dispatchY / 4); // 1;//dispatchY * 1;
+    dispatchSize.dispatchX = dispatchX;
+    dispatchSize.dispatchY = ceil((float)dispatchY / 4);
   } else if (format == VK_FORMAT_R32_SFLOAT) {
-    dispatchSize.dispatchX = dispatchX * 2; // *dispatchY;
-    dispatchSize.dispatchY = dispatchY / 2; // / 4); // 1;//dispatchY * 1;
+    dispatchSize.dispatchX = dispatchX * 2;
+    dispatchSize.dispatchY = ceil((float)dispatchY / 2);
   } else
     return dispatchSize;
 }
@@ -91,10 +91,10 @@ static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
     // NV ID 4318.
     if (vendorID != 4318) {
       extent.width = (width);
-      extent.height = ceil(height / 4); // (height);
+      extent.height = ceil((float)height / 4); // (height);
     } else {
-      extent.width = ceil(width / 2);
-      extent.height = ceil(height / 2);
+      extent.width = ceil((float)width / 2);
+      extent.height = ceil((float)height / 2);
     }
   } else if (format == VK_FORMAT_R32_SFLOAT) {
     extent.width = width * 2;   // *2;
