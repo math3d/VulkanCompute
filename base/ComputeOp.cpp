@@ -78,6 +78,14 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
     return dispatchSize;
 }
 
+static DispatchSize getDispatchSizeForBuffer(const uint32_t dispatchX,
+                                    const uint32_t dispatchY,
+                                    const uint32_t dispatchZ,
+                                    const VkFormat format, uint32_t vendorID) {
+  DispatchSize dispatchSize = {dispatchX, dispatchY, dispatchZ};
+  return dispatchSize;
+}
+
 static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
                                     const VkFormat format, uint32_t vendorID) {
   VkExtent3D extent;
@@ -972,7 +980,7 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
                       queryPool_, 0);
 #endif
   DispatchSize dispatchSize =
-      getDispatchSize(params_.DISPATCH_X, params_.DISPATCH_Y, 1, imageFormat_,
+      getDispatchSizeForBuffer(params_.DISPATCH_X, params_.DISPATCH_Y, 1, imageFormat_,
                       deviceProperties_.vendorID);
   vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
                 1);

@@ -18,8 +18,8 @@ layout(constant_id = 5) const uint OUTPUT_HEIGHT = 1;
 // TODO: Fix this in 2D.
 void main() {
   uint index = gl_GlobalInvocationID.y + INPUT_HEIGHT * gl_GlobalInvocationID.x;
-  if (index >= INPUT_WIDTH*INPUT_HEIGHT)
-    return;
+  // if (index >= INPUT_WIDTH*INPUT_HEIGHT)
+    // return;
   outputValues[index] = values[index] + filterValues[index];
 }
 
