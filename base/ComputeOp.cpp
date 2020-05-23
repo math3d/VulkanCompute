@@ -74,8 +74,8 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
   } else if (format == VK_FORMAT_R32_SFLOAT) {
     dispatchSize.dispatchX = dispatchX * 2;
     dispatchSize.dispatchY = ceil((float)dispatchY / 2);
-  } else
-    return dispatchSize;
+  }
+  return dispatchSize;
 }
 
 static DispatchSize getDispatchSizeForBuffer(const uint32_t dispatchX,
@@ -101,8 +101,8 @@ static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
       extent.width = (width);
       extent.height = ceil((float)height / 4); // (height);
     } else {
-      extent.width = ceil((float)width / 2);
-      extent.height = ceil((float)height / 2);
+      extent.width = (width);
+      extent.height = ceil((float)height / 4);
     }
   } else if (format == VK_FORMAT_R32_SFLOAT) {
     extent.width = width * 2;   // *2;
