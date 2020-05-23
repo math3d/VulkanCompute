@@ -15,20 +15,52 @@
 #include <string.h>
 #include <vector>
 
+#include "CommandLineParser.h"
 #include "ComputeBufferOp.h"
+#define USE_TIME
+
+#ifdef USE_TIME
+#include "Utils.h"
+#include <time.h>
+#else
+#define TIME
+#endif
 
 #define DEBUG (!NDEBUG)
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 void android_main(android_app *state) { android_realmain(state); }
 #else
-int main() {
+int main(int argc, char **argv) {
+  CommandLineParser cmdLine(argc, argv);
   ComputeOp::InitParams params;
-  params.inputWidth = 4;
-  params.inputHeight = 8;
+
+  const int width = cmdLine.getWidth();
+  const int height = cmdLine.getHeight();
+  const int WORKGROUPSIZE_X = cmdLine.getWorkgroupSizeX();
+  const int WORKGROUPSIZE_Y = cmdLine.getWorkgroupSizeY();
+  const int WORKGROUPSIZE_Z = cmdLine.getWorkgroupSizeZ();
+
+  params.inputWidth = width;
+  params.inputHeight = height;
   params.filterWidth = 3;
   params.filterHeight = 3;
 
+/*
+  ComputeOp::InitParams params;
+  params.inputWidth = width;
+  params.inputHeight = height;
+  params.filterWidth = width;
+  params.filterHeight = height;
+  params.outputWidth = width;
+  params.outputHeight = height;
+  params.DISPATCH_X = ceil((float)width / WORKGROUPSIZE_X);
+  params.DISPATCH_Y = ceil((float)height / WORKGROUPSIZE_Y);
+  params.DISPATCH_Z = 1;
+  params.WORKGROUPSIZE_X = WORKGROUPSIZE_X;
+  params.WORKGROUPSIZE_Y = WORKGROUPSIZE_Y;
+  params.WORKGROUPSIZE_Z = WORKGROUPSIZE_Z;
+*/
 #if 1
   // Core segmentation fault.
   params.outputWidth = params.inputWidth - params.filterWidth + 1;

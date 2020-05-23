@@ -15,7 +15,16 @@
 #include <string.h>
 #include <vector>
 
+#include "CommandLineParser.h"
 #include "ComputeImageOp.h"
+#define USE_TIME
+
+#ifdef USE_TIME
+#include "Utils.h"
+#include <time.h>
+#else
+#define TIME
+#endif
 
 #define DEBUG (!NDEBUG)
 
@@ -23,10 +32,17 @@
 void android_main(android_app *state) { android_realmain(state); }
 #else
 
-int main() {
+int main(int argc, char **argv) {
+  CommandLineParser cmdLine(argc, argv);
   ComputeOp::InitParams params;
-  params.inputWidth = 4;
-  params.inputHeight = 8;
+
+  const int width = cmdLine.getWidth();
+  const int height = cmdLine.getHeight();
+  const int WORKGROUPSIZE_X = cmdLine.getWorkgroupSizeX();
+  const int WORKGROUPSIZE_Y = cmdLine.getWorkgroupSizeY();
+  const int WORKGROUPSIZE_Z = cmdLine.getWorkgroupSizeZ();
+  params.inputWidth = width;
+  params.inputHeight = height;
   params.filterWidth = 3;
   params.filterHeight = 3;
   params.outputWidth = params.inputWidth - params.filterWidth + 1;
