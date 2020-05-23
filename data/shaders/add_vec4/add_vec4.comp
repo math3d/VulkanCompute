@@ -1,0 +1,25 @@
+#version 450
+layout(binding = 0) buffer Output { vec4 outputValues[]; };
+
+layout(binding = 1) buffer Input { vec4 values[]; };
+
+layout(binding = 2) buffer Filter { vec4 filterValues[]; };
+
+// layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(constant_id = 0) const uint INPUT_WIDTH = 32;
+layout(constant_id = 1) const uint INPUT_HEIGHT = 1;
+layout(constant_id = 2) const uint FILTER_WIDTH = 32;
+layout(constant_id = 3) const uint FILTER_HEIGHT = 1;
+layout(constant_id = 4) const uint OUTPUT_WIDTH = 32;
+layout(constant_id = 5) const uint OUTPUT_HEIGHT = 1;
+
+// TODO: Fix this in 2D.
+void main() {
+  uint index = gl_GlobalInvocationID.y + INPUT_HEIGHT * gl_GlobalInvocationID.x;
+  //if (index >= INPUT_WIDTH*INPUT_HEIGHT)
+  //  return;
+  outputValues[index] = values[index] + filterValues[index];
+}
+

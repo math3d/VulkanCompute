@@ -40,6 +40,7 @@ endfunction(buildExamples)
 
 set(EXAMPLES
     add
+    add_vec4
     add_image
     add_imager32f
     copy_image
