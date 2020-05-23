@@ -41,9 +41,9 @@ int main(int argc, char **argv) {
   // HD: works: 32x1; not work: 4x8.
   const int width = cmdLine.getWidth();
   const int height = cmdLine.getHeight();
-  const int WORKGROUPSIZE_X = 1;
-  const int WORKGROUPSIZE_Y = 1;
-  const int WORKGROUPSIZE_Z = 1;
+  const int WORKGROUPSIZE_X = cmdLine.getWorkgroupSizeX();
+  const int WORKGROUPSIZE_Y = cmdLine.getWorkgroupSizeY();
+  const int WORKGROUPSIZE_Z = cmdLine.getWorkgroupSizeZ();
 
   ComputeOp::InitParams params;
   params.inputWidth = width;

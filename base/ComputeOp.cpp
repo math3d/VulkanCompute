@@ -42,19 +42,19 @@ android_app *androidapp;
 #define USE_FILTER
 #define USE_TIMESTAMP
 #define USE_TIME
-// #define USE_SPECIALIZATION_WGS
+#define USE_SPECIALIZATION_WGS
 struct SpecializationData {
+#ifdef USE_SPECIALIZATION_WGS
+  uint32_t workgroupSizeX;
+  uint32_t workgroupSizeY;
+  uint32_t workgroupSizeZ;
+#endif
   uint32_t inputWidth;
   uint32_t inputHeight;
   uint32_t filterWidth;
   uint32_t filterHeight;
   uint32_t outputWidth;
   uint32_t outputHeight;
-#ifdef USE_SPECIALIZATION_WGS
-  uint32_t workgroupSizeX;
-  uint32_t workgroupSizeY;
-  uint32_t workgroupSizeZ;
-#endif
 };
 
 struct DispatchSize {

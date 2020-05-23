@@ -5,16 +5,23 @@ layout(binding = 1, rgba32f) uniform readonly image2D values;
 // readonly
 layout(binding = 2, rgba32f) uniform readonly image2D filterValues;
 
-// layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
+layout(constant_id = 3) const uint INPUT_WIDTH = 32;
+layout(constant_id = 4) const uint INPUT_HEIGHT = 1;
+layout(constant_id = 5) const uint FILTER_WIDTH = 32;
+layout(constant_id = 6) const uint FILTER_HEIGHT = 1;
+layout(constant_id = 7) const uint OUTPUT_WIDTH = 32;
+layout(constant_id = 8) const uint OUTPUT_HEIGHT = 1;
 
+/*
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(constant_id = 0) const uint INPUT_WIDTH = 32;
 layout(constant_id = 1) const uint INPUT_HEIGHT = 1;
 layout(constant_id = 2) const uint FILTER_WIDTH = 32;
 layout(constant_id = 3) const uint FILTER_HEIGHT = 1;
 layout(constant_id = 4) const uint OUTPUT_WIDTH = 32;
 layout(constant_id = 5) const uint OUTPUT_HEIGHT = 1;
-
+*/
 
 // 32-bit IEEE 754 binary32 format representation of real number 1:
 // https://en.wikipedia.org/wiki/Single-precision_floating-point_format

@@ -14,6 +14,18 @@ CommandLineParser::CommandLineParser(int &argc, char **argv) {
   if (!paraName.empty()) {
     height_ = (uint32_t)std::atoi(paraName.c_str());
   }
+  paraName = getCmdOption("-wx");
+  if (!paraName.empty()) {
+    workgroup_size_x_ = (uint32_t)std::atoi(paraName.c_str());
+  }
+  paraName = getCmdOption("-wy");
+  if (!paraName.empty()) {
+    workgroup_size_y_ = (uint32_t)std::atoi(paraName.c_str());
+  }
+  paraName = getCmdOption("-wz");
+  if (!paraName.empty()) {
+    workgroup_size_z_ = (uint32_t)std::atoi(paraName.c_str());
+  }
 }
 const std::string &
 CommandLineParser::getCmdOption(const std::string &option) const {
@@ -31,3 +43,6 @@ bool CommandLineParser::cmdOptionExists(const std::string &option) const {
 }
 const uint32_t CommandLineParser::getWidth() { return width_; }
 const uint32_t CommandLineParser::getHeight() { return height_; }
+const uint32_t CommandLineParser::getWorkgroupSizeX() { return workgroup_size_x_; }
+const uint32_t CommandLineParser::getWorkgroupSizeY() { return workgroup_size_y_; }
+const uint32_t CommandLineParser::getWorkgroupSizeZ() { return workgroup_size_z_; }
