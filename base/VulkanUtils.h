@@ -154,10 +154,10 @@ void timeOfDispatch(const VkDevice device, const VkQueryPool &queryPool) {
 
   static float totalTime = 0.0f;
 
-  vkGetQueryPoolResults(device, queryPool, 1, 1, sizeof(uint32_t), &end, 0,
-                        VK_QUERY_RESULT_WAIT_BIT);
-  vkGetQueryPoolResults(device, queryPool, 0, 1, sizeof(uint32_t), &begin, 0,
-                        VK_QUERY_RESULT_WAIT_BIT);
+  VK_CHECK_RESULT(vkGetQueryPoolResults(device, queryPool, 1, 1, sizeof(uint32_t), &end, 0,
+                        VK_QUERY_RESULT_WAIT_BIT));
+  VK_CHECK_RESULT(vkGetQueryPoolResults(device, queryPool, 0, 1, sizeof(uint32_t), &begin, 0,
+                        VK_QUERY_RESULT_WAIT_BIT));
   uint32_t diff = end - begin;
   totalTime += (diff) / (float)1e6;
   LOG("Time for dispatch = %fms\n", totalTime);

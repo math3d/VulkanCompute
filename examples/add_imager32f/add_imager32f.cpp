@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
   ComputeOp *computeOp = new ComputeImageOp(params);
   computeOp->summaryOfInput();
-  computeOp->execute();
+  TIME("execute", computeOp->execute());
   computeOp->summary();
   delete (computeOp);
   return 0;
