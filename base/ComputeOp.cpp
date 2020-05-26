@@ -954,10 +954,14 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
       vks::initializers::commandBufferBeginInfo();
 
   VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer_, &cmdBufInfo));
-#ifdef USE_TIMESTAMP
+//#ifdef USE_TIMESTAMP || USE_TIMESTAMP_BARRIER
+#if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
   vkCmdResetQueryPool(commandBuffer_, queryPool_, 0, 2);
 #endif
-
+#ifdef USE_TIMESTAMP_BARRIER
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                      queryPool_, 0);
+#endif
   // Barrier to ensure that input buffer transfer is finished before compute
   // shader reads from it.
   VkBufferMemoryBarrier bufferBarrier =
@@ -985,7 +989,7 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
                                imageFormat_, deviceProperties_.vendorID);
   vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
                 1);
-#ifdef USE_TIMESTAMP
+#if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
   vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                       queryPool_, 1);
 #endif
@@ -1072,13 +1076,17 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
 }
 
 VkResult ComputeOp::prepareImageToImageCommandBuffer() {
-  vkQueueWaitIdle(queue_);
+  // vkQueueWaitIdle(queue_);
   VkCommandBufferBeginInfo cmdBufInfo =
       vks::initializers::commandBufferBeginInfo();
 
   VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer_, &cmdBufInfo));
-#ifdef USE_TIMESTAMP
+#if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
   vkCmdResetQueryPool(commandBuffer_, queryPool_, 0, 2);
+#endif
+#ifdef USE_TIMESTAMP_BARRIER
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                      queryPool_, 0);
 #endif
 
   // Image memory barrier to make sure that compute shader writes are finished
@@ -1086,7 +1094,6 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   VkImageMemoryBarrier imageMemoryBarrier = {};
   imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 #ifdef USE_INPUT
-
   // We won't be changing the layout of the image
   imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
   imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -1133,6 +1140,11 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
                        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_FLAGS_NONE, 0,
                        nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
+#ifdef USE_TIMESTAMP_BARRIER
+  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                      queryPool_, 1);
+#endif
+
   VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer_));
   VkFence fence;
   VkFenceCreateInfo fenceCreateInfo =
@@ -1150,7 +1162,7 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   VK_CHECK_RESULT(vkWaitForFences(device_, 1, &fence, VK_TRUE, UINT64_MAX));
   vkDestroyFence(device_, fence, nullptr);
 
-#ifdef USE_TIMESTAMP
+#if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
   // nanoseconds.
   timeOfDispatch(device_, queryPool_);
 #endif
@@ -1857,6 +1869,17 @@ void ComputeOp::summaryOfInput() const {
 }
 
 void ComputeOp::summary() const {
+  const int lastInput =
+      (int)params_.computeInput[params_.inputWidth * params_.inputHeight - 1];
+  const int lastFilter =
+      (int)params_.computeFilter[params_.inputWidth * params_.inputHeight - 1];
+  const int lastOutput =
+      (int)
+          params_.computeOutput[params_.outputWidth * params_.outputHeight - 1];
+
+  if (lastInput + lastFilter != lastOutput)
+    LOG("ADD ERROR!!!!!!!!\n");
+
   LOG("summary: %f + %f = %f\n",
       params_.computeInput[params_.inputWidth * params_.inputHeight - 1],
       params_.computeFilter[params_.inputWidth * params_.inputHeight - 1],
