@@ -72,16 +72,17 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
     dispatchSize.dispatchX = dispatchX;
     dispatchSize.dispatchY = ceil((float)dispatchY / 4);
   } else if (format == VK_FORMAT_R32_SFLOAT) {
-    dispatchSize.dispatchX = dispatchX;//dispatchX * 2;
-    dispatchSize.dispatchY = dispatchX;//ceil((float)dispatchY / 2);
+    dispatchSize.dispatchX = dispatchX; // dispatchX * 2;
+    dispatchSize.dispatchY = dispatchX; // ceil((float)dispatchY / 2);
   }
   return dispatchSize;
 }
 
 static DispatchSize getDispatchSizeForBuffer(const uint32_t dispatchX,
-                                    const uint32_t dispatchY,
-                                    const uint32_t dispatchZ,
-                                    const VkFormat format, uint32_t vendorID) {
+                                             const uint32_t dispatchY,
+                                             const uint32_t dispatchZ,
+                                             const VkFormat format,
+                                             uint32_t vendorID) {
   DispatchSize dispatchSize = {dispatchX, dispatchY, dispatchZ};
   return dispatchSize;
 }
@@ -105,8 +106,8 @@ static VkExtent3D getExtentOfFormat(const uint32_t width, const uint32_t height,
       extent.height = ceil((float)height / 4);
     }
   } else if (format == VK_FORMAT_R32_SFLOAT) {
-    extent.width = width;// * 2;   // *2;
-    extent.height = height;// * 2; // *4;
+    extent.width = width;   // * 2;   // *2;
+    extent.height = height; // * 2; // *4;
   } else {
     extent.width = width;
     extent.height = height;
@@ -980,8 +981,8 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
                       queryPool_, 0);
 #endif
   DispatchSize dispatchSize =
-      getDispatchSizeForBuffer(params_.DISPATCH_X, params_.DISPATCH_Y, 1, imageFormat_,
-                      deviceProperties_.vendorID);
+      getDispatchSizeForBuffer(params_.DISPATCH_X, params_.DISPATCH_Y, 1,
+                               imageFormat_, deviceProperties_.vendorID);
   vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
                 1);
 #ifdef USE_TIMESTAMP
@@ -1250,11 +1251,27 @@ VkResult ComputeOp::prepareDevice() {
   std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
   VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance_, &deviceCount,
                                              physicalDevices.data()));
-  physicalDevice_ = physicalDevices[0];
 
-  // VkPhysicalDeviceProperties deviceProperties;
+  bool foundDiscreteGPU = false;
+  for (const auto &device : physicalDevices) {
+    auto props = VkPhysicalDeviceProperties{};
+    vkGetPhysicalDeviceProperties(device, &props);
+
+    // Determine the type of the physical device
+    if (props.deviceType ==
+        VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+      foundDiscreteGPU = true;
+      physicalDevice_ = device;
+      break;
+    }
+  }
+  if (!foundDiscreteGPU)
+    physicalDevice_ = physicalDevices[0];
+
   vkGetPhysicalDeviceProperties(physicalDevice_, &deviceProperties_);
+
   LOG("***********: GPU INFO:\n");
+  LOG("deviceCount: %d\n", deviceCount);
   LOG("%s\n", deviceProperties_.deviceName);
   LOG("vendorID: %d\n", deviceProperties_.vendorID);
   LOG("deviceID: %d\n", deviceProperties_.deviceID);
