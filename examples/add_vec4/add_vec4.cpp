@@ -37,9 +37,9 @@ int main(int argc, char **argv) {
   // works: 4x8; 32x1.
   const int width = cmdLine.getWidth();
   const int height = cmdLine.getHeight();
-  const int WORKGROUPSIZE_X = 1;
-  const int WORKGROUPSIZE_Y = 1;
-  const int WORKGROUPSIZE_Z = 1;
+  const int WORKGROUPSIZE_X = cmdLine.getWorkgroupSizeX();
+  const int WORKGROUPSIZE_Y = cmdLine.getWorkgroupSizeY();
+  const int WORKGROUPSIZE_Z = cmdLine.getWorkgroupSizeZ();
 
   ComputeOp::InitParams params;
   params.inputWidth = width;
@@ -48,8 +48,8 @@ int main(int argc, char **argv) {
   params.filterHeight = height;
   params.outputWidth = width;
   params.outputHeight = height;
-  params.DISPATCH_X = ceil((float)width /( WORKGROUPSIZE_X*4));
-  params.DISPATCH_Y = ceil((float)height /( WORKGROUPSIZE_X));
+  params.DISPATCH_X = ceil((float)width / (WORKGROUPSIZE_X * 4));
+  params.DISPATCH_Y = ceil((float)height / (WORKGROUPSIZE_X));
   params.DISPATCH_Z = 1;
   params.WORKGROUPSIZE_X = WORKGROUPSIZE_X;
   params.WORKGROUPSIZE_Y = WORKGROUPSIZE_Y;
