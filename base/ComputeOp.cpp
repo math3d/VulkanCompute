@@ -1069,7 +1069,8 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
 
   vkUnmapMemory(device_, outputHostMemory);
 #endif
-#ifdef USE_TIMESTAMP
+
+#if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
   timeOfDispatch(device_, queryPool_);
 #endif
   return VK_SUCCESS;
