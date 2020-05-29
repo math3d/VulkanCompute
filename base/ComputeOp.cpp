@@ -42,6 +42,7 @@ android_app *androidapp;
 #define USE_FILTER
 #define USE_TIMESTAMP
 #define USE_TIME
+#define TIMESTAMP_STAGE VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
 #define USE_SPECIALIZATION_WGS
 struct SpecializationData {
 #ifdef USE_SPECIALIZATION_WGS
@@ -959,8 +960,7 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
   vkCmdResetQueryPool(commandBuffer_, queryPool_, 0, 2);
 #endif
 #ifdef USE_TIMESTAMP_BARRIER
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                      queryPool_, 0);
+  vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE, queryPool_, 0);
 #endif
   // Barrier to ensure that input buffer transfer is finished before compute
   // shader reads from it.
@@ -981,18 +981,29 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
   vkCmdBindDescriptorSets(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE,
                           pipelineLayout_, 0, 1, &descriptorSet_, 0, 0);
 #ifdef USE_TIMESTAMP
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                      queryPool_, 0);
+  vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE, queryPool_, 0);
 #endif
   DispatchSize dispatchSize =
       getDispatchSizeForBuffer(params_.DISPATCH_X, params_.DISPATCH_Y, 1,
                                imageFormat_, deviceProperties_.vendorID);
   vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
                 1);
+
+  bufferBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+  bufferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+  bufferBarrier.buffer = outputDeviceBuffer;
+  bufferBarrier.size = VK_WHOLE_SIZE;
+  bufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  bufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+  vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                       VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_FLAGS_NONE, 0,
+                       nullptr, 1, &bufferBarrier, 0, nullptr);
+
 #if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                      queryPool_, 1);
+  vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE, queryPool_, 1);
 #endif
+
   // Below merges the dispatch and copy.
 #if 0
   // Barrier to ensure that shader writes are finished before buffer is read
@@ -1086,8 +1097,7 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   vkCmdResetQueryPool(commandBuffer_, queryPool_, 0, 2);
 #endif
 #ifdef USE_TIMESTAMP_BARRIER
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                      queryPool_, 0);
+  vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE, queryPool_, 0);
 #endif
 
   // Image memory barrier to make sure that compute shader writes are finished
@@ -1120,8 +1130,7 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   vkCmdBindDescriptorSets(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE,
                           pipelineLayout_, 0, 1, &descriptorSet_, 0, 0);
 #ifdef USE_TIMESTAMP
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                      queryPool_, 0);
+  vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE, queryPool_, 0);
 #endif
   DispatchSize dispatchSize =
       getDispatchSize(params_.DISPATCH_X, params_.DISPATCH_Y, 1, imageFormat_,
@@ -1129,21 +1138,19 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
                 1);
 #ifdef USE_TIMESTAMP
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                      queryPool_, 1);
+  vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE, queryPool_, 1);
 #endif
 
   imageMemoryBarrier.image = outputImage_;
   imageMemoryBarrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
   imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-  imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
   vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_FLAGS_NONE, 0,
                        nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 #ifdef USE_TIMESTAMP_BARRIER
-  vkCmdWriteTimestamp(commandBuffer_, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                      queryPool_, 1);
+  vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE, queryPool_, 1);
 #endif
 
   VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer_));
