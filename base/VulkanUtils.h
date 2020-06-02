@@ -149,29 +149,11 @@ getMemoryType(const VkPhysicalDeviceMemoryProperties &deviceMemoryProperties,
 }
 
 void timeOfDispatch(const VkDevice device, const VkQueryPool &queryPool,
-                     float timestampPeriod, uint32_t timestampValidBits) {
+                    float timestampPeriod, uint32_t timestampValidBits) {
   uint64_t rawDeviceTimestamps[2] = {0, 0};
-
-  float totalTime = 0.0f;
-  /*
-  uint64_t raw_device_timestamps[2] = { 0, 0 };
-  result = vkGetQueryPoolResults(info->device, qpool, 0, 2,
-  sizeof(raw_device_timestamps), raw_device_timestamps, sizeof(uint64_t),
-  VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT); if (result != VK_SUCCESS)
-  { return result;
-  }
-  */
-
   VK_CHECK_RESULT(vkGetQueryPoolResults(
-      device, queryPool, 1, 1, sizeof(uint32_t), &rawDeviceTimestamps[1], 0,
-      VK_QUERY_RESULT_WAIT_BIT));
-  VK_CHECK_RESULT(vkGetQueryPoolResults(
-      device, queryPool, 0, 1, sizeof(uint32_t), &rawDeviceTimestamps[0], 0,
-      VK_QUERY_RESULT_WAIT_BIT));
-  // Below time is incorrect.
-  // uint64_t diff = rawDeviceTimestamps[1] - rawDeviceTimestamps[0];
-  // totalTime = (float)(diff) / (float)1e6;
-  // LOG("Time for dispatch = %fms\n", totalTime);
+      device, queryPool, 0, 2, sizeof(rawDeviceTimestamps), rawDeviceTimestamps,
+      sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
   // https://gist.github.com/cdwfs/4222ca09cb259f8dd50f7f2cf7d09179
   const uint64_t timestampMask = (timestampValidBits == 64)
                                      ? UINT64_MAX
