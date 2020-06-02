@@ -1084,7 +1084,7 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
 #endif
 
 #if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
-  timeOfDispatch(device_, queryPool_);
+  timeOfDispatch(device_, queryPool_, deviceProperties_.limits.timestampPeriod, timestampValidBits_);
 #endif
   return VK_SUCCESS;
 }
@@ -1174,7 +1174,7 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
 
 #if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
   // nanoseconds.
-  timeOfDispatch(device_, queryPool_);
+  timeOfDispatch(device_, queryPool_, deviceProperties_.limits.timestampPeriod, timestampValidBits_);
 #endif
   return VK_SUCCESS;
 }
@@ -1309,6 +1309,8 @@ VkResult ComputeOp::prepareDevice() {
       deviceProperties_.limits.maxComputeWorkGroupSize[2]);
   LOG("GPU: maxComputeSharedMemorySize = %d\n",
       deviceProperties_.limits.maxComputeSharedMemorySize);
+  LOG("GPU: timestampPeriod = %f\n",
+	  deviceProperties_.limits.timestampPeriod);
   vkGetPhysicalDeviceMemoryProperties(physicalDevice_,
                                       &deviceMemoryProperties_);
 
@@ -1332,6 +1334,7 @@ VkResult ComputeOp::prepareDevice() {
       break;
     }
   }
+  timestampValidBits_ = queueFamilyProperties[queueFamilyIndex_].timestampValidBits;
   // Create logical device.
   VkDeviceCreateInfo deviceCreateInfo = {};
   deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

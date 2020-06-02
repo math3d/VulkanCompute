@@ -185,6 +185,8 @@ protected:
   VkQueryPool queryPool_;
 
   VkDebugReportCallbackEXT debugReportCallback{};
+private:
+  uint32_t timestampValidBits_;
 };
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
