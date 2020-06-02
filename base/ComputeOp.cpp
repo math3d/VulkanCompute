@@ -37,12 +37,11 @@ android_app *androidapp;
 
 #define DEBUG (!NDEBUG)
 
-// const int BUFFER_NUMBER = 3;
 #define USE_INPUT
 #define USE_FILTER
-#define USE_TIMESTAMP
+#define USE_TIMESTAMP_BARRIER
 #define USE_TIME
-#define TIMESTAMP_STAGE_BEGIN VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+#define TIMESTAMP_STAGE_BEGIN VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
 #define TIMESTAMP_STAGE_END VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
 
 #define USE_SPECIALIZATION_WGS
@@ -957,7 +956,6 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
       vks::initializers::commandBufferBeginInfo();
 
   VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer_, &cmdBufInfo));
-//#ifdef USE_TIMESTAMP || USE_TIMESTAMP_BARRIER
 #if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
   vkCmdResetQueryPool(commandBuffer_, queryPool_, 0, 2);
 #endif
