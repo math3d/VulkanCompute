@@ -37,7 +37,6 @@ android_app *androidapp;
 #define DEBUG (!NDEBUG)
 
 const int BUFFER_NUMBER = 3;
-#define USE_INPUT 1
 
 inline VkImageCreateInfo initImageCreateInfo() {
   VkImageCreateInfo imageCreateInfo{};

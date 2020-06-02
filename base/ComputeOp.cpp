@@ -37,8 +37,6 @@ android_app *androidapp;
 
 #define DEBUG (!NDEBUG)
 
-#define USE_INPUT
-#define USE_FILTER
 #define USE_TIMESTAMP_BARRIER
 #define USE_TIME
 #define TIMESTAMP_STAGE_BEGIN VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
@@ -1104,7 +1102,6 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   // before sampling from the texture
   VkImageMemoryBarrier imageMemoryBarrier = {};
   imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-#ifdef USE_INPUT
   // We won't be changing the layout of the image
   imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
   imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -1115,8 +1112,7 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_FLAGS_NONE, 0,
                        nullptr, 0, nullptr, 1, &imageMemoryBarrier);
-#endif
-#ifdef USE_FILTER
+
   imageMemoryBarrier.image = filterImage_;
   imageMemoryBarrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
   imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
@@ -1124,7 +1120,6 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
   vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_FLAGS_NONE, 0,
                        nullptr, 0, nullptr, 1, &imageMemoryBarrier);
-#endif
 
   vkCmdBindPipeline(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_);
   vkCmdBindDescriptorSets(commandBuffer_, VK_PIPELINE_BIND_POINT_COMPUTE,
@@ -1415,16 +1410,14 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                             0, &outputBufferDescriptor),
-#ifdef USE_INPUT
+
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                             1, &bufferDescriptor),
-#endif
-#ifdef USE_FILTER
+
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                             2, &filterBufferDescriptor),
-#endif
   };
   vkUpdateDescriptorSets(
       device_, static_cast<uint32_t>(computeWriteDescriptorSets.size()),
@@ -1589,11 +1582,9 @@ VkResult ComputeOp::prepareImageToBufferPipeline(VkBuffer &deviceBuffer,
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,
                                             &imageDescriptor),
-#ifdef USE_FILTER
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2,
                                             &filterImageDescriptor),
-#endif
   };
 
   vkUpdateDescriptorSets(
@@ -1709,17 +1700,12 @@ VkResult ComputeOp::prepareImageToImagePipeline() {
       // Binding 0: Storage image (raytraced output)
       vks::initializers::descriptorSetLayoutBinding(
           VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0),
-#ifdef USE_INPUT
       // Binding 2: Shader storage buffer for the spheres
       vks::initializers::descriptorSetLayoutBinding(
           VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1),
-#endif
-#ifdef USE_FILTER
-
       // Binding 2: Shader storage buffer for the spheres
       vks::initializers::descriptorSetLayoutBinding(
           VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2),
-#endif
   };
 
   VkDescriptorSetLayoutCreateInfo descriptorLayout =
@@ -1759,16 +1745,12 @@ VkResult ComputeOp::prepareImageToImagePipeline() {
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0,
                                             &outputImageDescriptor),
-#ifdef USE_INPUT
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,
                                             &imageDescriptor),
-#endif
-#ifdef USE_FILTER
       vks::initializers::writeDescriptorSet(descriptorSet_,
                                             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2,
                                             &filterImageDescriptor),
-#endif
   };
   vkUpdateDescriptorSets(
       device_, static_cast<uint32_t>(computeWriteDescriptorSets.size()),

@@ -8,9 +8,6 @@
 #include "Utils.h"
 #include <time.h>
 
-#define USE_INPUT 1
-#define USE_FILTER 1
-
 ComputeBufferOp::ComputeBufferOp() {}
 
 ComputeBufferOp::~ComputeBufferOp() {}

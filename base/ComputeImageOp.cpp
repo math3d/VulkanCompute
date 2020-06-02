@@ -14,9 +14,6 @@
 #define TIME
 #endif
 
-#define USE_INPUT 1
-#define USE_FILTER 1
-
 ComputeImageOp::ComputeImageOp() {}
 
 ComputeImageOp::~ComputeImageOp() {}
