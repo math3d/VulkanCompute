@@ -78,6 +78,16 @@ static DispatchSize getDispatchSize(const uint32_t dispatchX,
   return dispatchSize;
 }
 
+// Flat the input. TODO: this is experiemntal. This may break conv2d and filter.
+static DispatchSize getFlatDispatchSizeForBuffer(const uint32_t width,
+                                                 const uint32_t height,
+                                                 const uint32_t workgroupSizeX,
+                                                 const VkFormat format,
+                                                 uint32_t vendorID) {
+  DispatchSize dispatchSize = {ceil(width * height / workgroupSizeX), 1, 1};
+  return dispatchSize;
+}
+
 static DispatchSize getDispatchSizeForBuffer(const uint32_t dispatchX,
                                              const uint32_t dispatchY,
                                              const uint32_t dispatchZ,
@@ -981,9 +991,15 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
 #ifdef USE_TIMESTAMP
   vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE_BEGIN, queryPool_, 0);
 #endif
-  DispatchSize dispatchSize =
-      getDispatchSizeForBuffer(params_.DISPATCH_X, params_.DISPATCH_Y, 1,
-                               imageFormat_, deviceProperties_.vendorID);
+  DispatchSize dispatchSize;
+  if (params_.WORKGROUPSIZE_Y == 1 && params_.WORKGROUPSIZE_Z == 1) {
+    dispatchSize = getFlatDispatchSizeForBuffer(
+        params_.inputWidth, params_.inputHeight, params_.WORKGROUPSIZE_X,
+        imageFormat_, deviceProperties_.vendorID);
+  } else
+    dispatchSize =
+        getDispatchSizeForBuffer(params_.DISPATCH_X, params_.DISPATCH_Y, 1,
+                                 imageFormat_, deviceProperties_.vendorID);
   vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
                 1);
 
@@ -1080,7 +1096,8 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
 #endif
 
 #if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
-  timeOfDispatch(device_, queryPool_, deviceProperties_.limits.timestampPeriod, timestampValidBits_);
+  timeOfDispatch(device_, queryPool_, deviceProperties_.limits.timestampPeriod,
+                 timestampValidBits_);
 #endif
   return VK_SUCCESS;
 }
@@ -1167,7 +1184,8 @@ VkResult ComputeOp::prepareImageToImageCommandBuffer() {
 
 #if defined(USE_TIMESTAMP) || defined(USE_TIMESTAMP_BARRIER)
   // nanoseconds.
-  timeOfDispatch(device_, queryPool_, deviceProperties_.limits.timestampPeriod, timestampValidBits_);
+  timeOfDispatch(device_, queryPool_, deviceProperties_.limits.timestampPeriod,
+                 timestampValidBits_);
 #endif
   return VK_SUCCESS;
 }
@@ -1302,8 +1320,7 @@ VkResult ComputeOp::prepareDevice() {
       deviceProperties_.limits.maxComputeWorkGroupSize[2]);
   LOG("GPU: maxComputeSharedMemorySize = %d\n",
       deviceProperties_.limits.maxComputeSharedMemorySize);
-  LOG("GPU: timestampPeriod = %f\n",
-	  deviceProperties_.limits.timestampPeriod);
+  LOG("GPU: timestampPeriod = %f\n", deviceProperties_.limits.timestampPeriod);
   vkGetPhysicalDeviceMemoryProperties(physicalDevice_,
                                       &deviceMemoryProperties_);
 
@@ -1327,7 +1344,8 @@ VkResult ComputeOp::prepareDevice() {
       break;
     }
   }
-  timestampValidBits_ = queueFamilyProperties[queueFamilyIndex_].timestampValidBits;
+  timestampValidBits_ =
+      queueFamilyProperties[queueFamilyIndex_].timestampValidBits;
   // Create logical device.
   VkDeviceCreateInfo deviceCreateInfo = {};
   deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -1440,11 +1458,18 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
   specializationData.workgroupSizeZ = params_.WORKGROUPSIZE_Z;
 #endif
   specializationData.inputWidth = params_.inputWidth;
-  specializationData.inputHeight = params_.inputHeight;
+
+  // Flat the input. TODO: this is experiemntal. This may break conv2d and
+  // filter.
+  if (params_.WORKGROUPSIZE_Y == 1 && params_.WORKGROUPSIZE_Z == 1)
+    specializationData.inputHeight = 1;
+  else
+    specializationData.inputHeight = params_.inputHeight;
   specializationData.filterWidth = params_.filterWidth;
   specializationData.filterHeight = params_.filterHeight;
   specializationData.outputWidth = params_.outputWidth;
   specializationData.outputHeight = params_.outputHeight;
+
   VkSpecializationMapEntry specializationMapEntry[] = {
       vks::initializers::specializationMapEntry(0, 0 * sizeof(uint32_t),
                                                 sizeof(uint32_t)),
