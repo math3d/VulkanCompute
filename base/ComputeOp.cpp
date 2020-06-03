@@ -84,7 +84,8 @@ static DispatchSize getFlatDispatchSizeForBuffer(const uint32_t width,
                                                  const uint32_t workgroupSizeX,
                                                  const VkFormat format,
                                                  uint32_t vendorID) {
-  DispatchSize dispatchSize = {ceil(width * height / workgroupSizeX), 1, 1};
+  DispatchSize dispatchSize = {ceil((float)width * height / workgroupSizeX), 1,
+                               1};
   return dispatchSize;
 }
 
@@ -1335,9 +1336,8 @@ VkResult ComputeOp::prepareDevice() {
                                            queueFamilyProperties.data());
   for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size());
        i++) {
-    LOG("GPU Queue type: %x\n",queueFamilyProperties[i].queueFlags);
+    LOG("GPU Queue type: %x\n", queueFamilyProperties[i].queueFlags);
   }
-
 
   for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size());
        i++) {
