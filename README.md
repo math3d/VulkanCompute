@@ -24,6 +24,15 @@ cmake -G "Visual Studio 15 2017 Win64"
 ```
 用Visual Studio 打开项目VulkanComputeExamples.sln，进行编译。
 
+## 运行
+
+Add (Default input size w = 4, h = 8; Default work group size: wx = 1, wy = 1, wz =1):
+```
+add -w 128 -h 128 -wx 16 -wy 16
+```
+
+## 其他
+Makefile部分基于SaschaWillems开源的[示例程序](https://github.com/SaschaWillems/Vulkan)修改而来.
 
 Submodule information
 ```
@@ -35,13 +44,3 @@ git submodule add https://github.com/KhronosGroup/KTX-Software external/ktx
 cd  external/ktx
 git checkout -b 726d14d02c95bb21ec9e43807751b491d295dd3c
 ```
-
-## 运行
-
-Add (Default input size w = 4, h = 8; Default work group size: wx = 1, wy = 1, wz =1):
-```
-add -w 128 -h 128 -wx 16 -wy 16
-```
-
-## 其他
-Makefile部分基于SaschaWillems开源的[示例程序](https://github.com/SaschaWillems/Vulkan)修改而来.

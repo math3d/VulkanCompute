@@ -25,6 +25,14 @@ cmake -G "Visual Studio 15 2017 Win64"
 ```
 Open VulkanComputeExamples.sln with Visual Studio.
 
+## Run
+Add (Default input size w = 4, h = 8; Default work group size: wx = 1, wy = 1, wz =1):
+```
+add -w 128 -h 128 -wx 16 -wy 16
+```
+
+## Others
+Makefile is based on SaschaWillems [Example](https://github.com/SaschaWillems/Vulkan).
 
 Submodule information
 ```
@@ -36,12 +44,3 @@ git submodule add https://github.com/KhronosGroup/KTX-Software external/ktx
 cd  external/ktx
 git checkout -b 726d14d02c95bb21ec9e43807751b491d295dd3c
 ```
-
-## Run
-Add (Default input size w = 4, h = 8; Default work group size: wx = 1, wy = 1, wz =1):
-```
-add -w 128 -h 128 -wx 16 -wy 16
-```
-
-## Others
-Makefile is based on SaschaWillems [Example](https://github.com/SaschaWillems/Vulkan).

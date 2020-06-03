@@ -1335,6 +1335,12 @@ VkResult ComputeOp::prepareDevice() {
                                            queueFamilyProperties.data());
   for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size());
        i++) {
+    LOG("GPU Queue type: %x\n",queueFamilyProperties[i].queueFlags);
+  }
+
+
+  for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size());
+       i++) {
     if (queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
       queueFamilyIndex_ = i;
       queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
