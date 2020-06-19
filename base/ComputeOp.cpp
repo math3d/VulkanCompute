@@ -993,6 +993,10 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
   vkCmdWriteTimestamp(commandBuffer_, TIMESTAMP_STAGE_BEGIN, queryPool_, 0);
 #endif
   DispatchSize dispatchSize;
+
+#if defined(USE_FLAT_INPUT)
+  // Flat the input. TODO: this is experiemntal. This may break conv2d and
+  // filter.
   if (params_.WORKGROUPSIZE_Y == 1 && params_.WORKGROUPSIZE_Z == 1) {
     dispatchSize = getFlatDispatchSizeForBuffer(
         params_.inputWidth, params_.inputHeight, params_.WORKGROUPSIZE_X,
@@ -1001,6 +1005,12 @@ VkResult ComputeOp::prepareCommandBuffer(VkBuffer &outputDeviceBuffer,
     dispatchSize =
         getDispatchSizeForBuffer(params_.DISPATCH_X, params_.DISPATCH_Y, 1,
                                  imageFormat_, deviceProperties_.vendorID);
+#else
+  dispatchSize =
+      getDispatchSizeForBuffer(params_.DISPATCH_X, params_.DISPATCH_Y, 1,
+                               imageFormat_, deviceProperties_.vendorID);
+#endif
+
   vkCmdDispatch(commandBuffer_, dispatchSize.dispatchX, dispatchSize.dispatchY,
                 1);
 
@@ -1465,12 +1475,16 @@ ComputeOp::prepareBufferToBufferPipeline(VkBuffer &deviceBuffer,
 #endif
   specializationData.inputWidth = params_.inputWidth;
 
+#if defined(USE_FLAT_INPUT)
   // Flat the input. TODO: this is experiemntal. This may break conv2d and
   // filter.
   if (params_.WORKGROUPSIZE_Y == 1 && params_.WORKGROUPSIZE_Z == 1)
     specializationData.inputHeight = 1;
   else
     specializationData.inputHeight = params_.inputHeight;
+#else
+  specializationData.inputHeight = params_.inputHeight;
+#endif
   specializationData.filterWidth = params_.filterWidth;
   specializationData.filterHeight = params_.filterHeight;
   specializationData.outputWidth = params_.outputWidth;
